@@ -337,3 +337,19 @@ data_frame %>%
 
 ```
 
+#flextable::color(), flextable::bg()
+```{r}
+
+is_pvalue_sign <- function(x) {
+  
+  x %>% str_remove("<") %>% as.numeric() %>% `<`(0.05)
+  
+}
+
+tibble("p-value" = c("<0.001", "0.38", "0.124", "0.005", "0.05")) %>%
+  flextable() %>%
+  theme_box() %>%
+  color(i = ~ is_pvalue_sign(`p-value`), color = "orange")
+
+```
+
