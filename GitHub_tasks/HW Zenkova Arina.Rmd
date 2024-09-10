@@ -346,7 +346,21 @@ tibble(`Adverse events` = c("soc желудочно-кишечные наруш�
 
 ```
 
+#flextable::bold(), flextable::italic()
+```{r}
 
+tibble(`Adverse events` = c("soc желудочно-кишечные нарушения 10017947", "рт тошнота 10028813", "soc нарушения со стороны нервной системы 10029205", "рт головная боль 10019211")) %>%
+  flextable() %>%
+  theme_box() %>%
+  align(i = ~ str_detect(`Adverse events`, "soc"), align = "left") %>%
+  align(i = ~ str_detect(`Adverse events`, "рт"), align = "right") %>%
+  
+  bold(i = ~ str_detect(`Adverse events`, "soc")) %>%
+  italic(i = ~ str_detect(`Adverse events`, "рт")) %>%
+  
+  width(width = 2)
+  
+```
 
 
 #flextable::color(), flextable::bg()
@@ -355,9 +369,7 @@ tibble(`Adverse events` = c("soc желудочно-кишечные наруш�
 is_pvalue_sign <- function(x) {
   
   x %>% str_remove("<") %>% as.numeric() %>% `<`(0.05)
-  
 }
-
 tibble("p-value" = c("<0.001", "0.38", "0.124", "0.005", "0.05")) %>%
   flextable() %>%
   theme_box() %>%
