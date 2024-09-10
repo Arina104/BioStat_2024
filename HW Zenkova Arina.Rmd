@@ -336,6 +336,18 @@ data_frame %>%
   merge_v(C("Группа", "переменная"))
 
 ```
+#flextable::align()
+```{r}
+
+tibble(`Adverse events` = c("soc желудочно-кишечные нарушения 10017947", "рт тошнота 10028813", "soc нарушения со стороны нервной системы 10029205", "рт головная боль 10019211")) %>%
+  flextable() %>%
+  theme_box() %>%
+  align(align = "center", part = "all")
+
+```
+
+
+
 
 #flextable::color(), flextable::bg()
 ```{r}
