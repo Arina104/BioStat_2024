@@ -99,36 +99,43 @@ data_frame %>%
   select(`Группа`, (function(x) is.factor(x)) | where(function(x) is.numeric(x)))
 
 ```
+
 ```{r}
 data_frame %>%
   select(where(is.numeric) & where(function(x) sd(x, na.rm = TRUE) > 1))
 
 ```
+
 ```{r}
 data_frame %>%
   select(function(x) any(str_detect(x, "Жен")))
 
 ```
+
 ```{r}
 data_frame %>%
   select(`Группа`, function(x) !is.factor(x))
 
 ```
+
 ```{r}
 data_frame %>%
   select(`Пол`, `Группа`, `Базофилы_E1`)
 
 ```
+
 ```{r}
 data_frame %>%
   select(`Группа крови`, `Возраст`, function(x) anyNA(x))
 
 ```
+
 ```{r}
 data_frame %>%
   select(function(x) sd(x, na.rm = TRUE) > 1)
 
 ```
+
 ```{r}
 data_frame %>%
   select(Группа крови, `Возраст`, function(x) anyNA(x)) #нет ковычек
@@ -146,12 +153,14 @@ data_frame %>%
 data_frame %>%
     mutate(across(!contains("E1") & !c(`Группа`, `Возраст`), function(x) x^2))
 ```
+
 ```{r}
 data_frame %>%
   mutate(across(!contains("E1"), function(x) str_c(x, " + некая строка")))
 
 
 ```
+
 ```{r}
 data_frame %>% 
   mutate(across(!contains("E1") & !c(`Группа`, `Возраст`) & !where(is.factor), function(x) x ^ 2), across(contains("E2"), function(x) x * 100))
@@ -172,12 +181,14 @@ data_frame %>%
   rename_with(function(x) x %>% stri_replace_all_regex(c('_E1', '_E2'), c('_Визит 1', '_Визит 2'), vectorize_all = FALSE)) %>%
   glimpse()
 ```
+
 ```{r}
 library(stringi)
 data_frame %>%
   rename_with(.cols = where(is.numeric), .fn = function(x) str_c(x, ' количественная переменная')) %>%
   glimpse()
 ```
+
 ```{r}
 new_name <-'cool_name'
 data_frame %>%
@@ -190,6 +201,7 @@ data_frame %>%
 data_frame %>%
   arrange('Возраст')
 ```
+
 ```{r}
 data_frame %>%
   arrange('Группа крови')
@@ -319,6 +331,7 @@ data_frame %>%
 tempdir()
 dir.create(tempdir())
 ```
+
 ```{r}
 library(flextable)
 ```
