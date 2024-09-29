@@ -2,7 +2,9 @@
 title: "Untitled"
 author: "Arina"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -11,6 +13,7 @@ library(tidyverse)
 library(dplyr)
 library(readxl)
 ```
+
 
 ```{r}
 data_set <- read_csv("C:/Users/Huawei/Desktop/biostat_2024-2025/Доказательная медицина/carrental - carrental.csv")
@@ -23,32 +26,45 @@ data_set %>%
   mutate(experience = as.factor(experience))
 ```
 
-#Посчитали распространенность experients 
+##Посчитали распространенность experients 
 ```{r}
 data_set_1 <- data_set %>%
   filter(experience == '1')
 nrow(data_set_1)/nrow(data_set) 
   
 ```
-```{r}
-length(which(data_set$experience == "1")) / length(which(data_set$experience  == "0"))
-```
-#Посчитали риск accident в общей группе
+#Ответ: 0.32 или 32% людей, взявших в аренду автомобиль в течение года, имеют стаж вождения
+
+
+##Посчитали риск accident в общей группе
 ```{r}
 length(which(data_set$accident == "1"))/nrow(data_set)
 ```
-#Посчитали риск accident в группе без experients
+#Ответ: 0.22 или риск (вероятность) попадания в ДТП водителей, берущих автомобиль в аренду, составляет 22%
+
+
+##Посчитали риск accident в группе без experients
 ```{r}
 length(which(data_set$accident == "1")) / length(which(data_set$experience  == "0"))
 ```
+#Ответ: 0.32 или риск (вероятноть) попадания в ДТП водителей без стажа вождения, берущих автомобиль в аренду, составляет 32%
+
+
 #Посчитали риск accident в группе c experients
 ```{r}
 length(which(data_set$accident == "1")) / length(which(data_set$experience  == "1"))
 ```
+##Ответ: 0.69 или риск (вероятность) попадания в ДТП водителей со стажем вождения, берущих автомобиль в аренду, составляет 69%
+
+
 #Посчитали плотность событий (incidence rate) в общей группе
 ```{r}
 length(which(data_set$accident == "1")) / (sum(data_set$stop) - sum(data_set$start))
+length(which(data_set$accident == "1"))
+(sum(data_set$stop) - sum(data_set$start))
 ```
+##Ответ: в среднем на каждый день аренды приходится 0.003 аварии или 3 аварии за 1000 дней аренды или 22 случая за 7222 дня аренды автомобилей
+
 #Посчитали плотность событий (incidence rate) в группе c experients
 ```{r}
 data_set_2 <- data_set %>%
@@ -56,10 +72,20 @@ data_set_2 <- data_set %>%
 length(which(data_set$accident == "1")) / (sum(data_set_2$stop) - sum(data_set_2$start))
 ```
 
+##Ответ: в среднем на каждый день аренды автомобилей водителями, имеющими стаж работы, приходится 0.02 аварии или 20 аварий за 1000 дней аренды
+
+
 #Посчитали плотность событий (incidence rate) в группе без experients
 ```{r}
 data_set_3 <- data_set %>%
   filter(experience == '0')
 length(which(data_set$accident == "1")) / (sum(data_set_3$stop) - sum(data_set_3$start))
+```
+##Ответ: в среднем на каждый день аренды автомобилей водителями, не имеющими стаж работы, приходится 0.003 аварии или 3 аварии за 1000 дней аренды
+
+###Общий вывод: Исходя из статистики за год, водители без стажа вождения, арендующие машины, водят аккуратнее и реже попадают в ДТП
+
+```{r}
+install.packages('tinytex')
 ```
 
