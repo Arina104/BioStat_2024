@@ -1,0 +1,90 @@
+---
+title: "Estimation of mean and SE"
+author: "Evgeny Bakin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+
+```
+
+## Модель пациента: исследование вероятности наступления случайной величины
+
+```{r pressure, echo=FALSE}
+
+values <- 0:20 # Значения, которые может принимать случайная величина
+max_val <- max(values) # Максимальное значение случайной величины
+Pr <- 1/length(values)  # Распределение в генеральной совокупности
+Pr_true <- 0.7 # Истинная вероятность в ген совокупности
+
+df <- data.frame(values, Pr)
+
+ggplot(df, aes(x=values, y=Pr)) +
+  geom_point() + 
+  geom_segment( aes(x=values, xend=values, y=0, yend=Pr)) +
+  scale_x_continuous(breaks = values) +
+  theme_bw()
+
+```
+
+## Однократная оценка по выборке
+
+```{r sample_1}
+
+n_patients <- 500 # Количество добровольцев 
+
+my_group_Pr_upd <- round(runif(n_patients, 0, 1), 1) # Результаты добровольцев. Вероятность может принимать значения от 0 до 1
+
+print(my_group_Pr_upd)
+
+sample_mean <- mean(my_group_Pr_upd) # Среднее значение вероятности случаного события в выборке
+
+print(sample_mean)
+
+```
+
+## Набираем статистику
+
+```{r sample_n}
+
+n_patients <- 500 # Количество добровольцев 
+
+n_repeats <- 10000 # Количество повторений эксперимента
+
+df_all_repeats <- data.frame(
+  n_exp = rep(1:n_repeats, each = n_patients),
+  ID =  rep(1:n_patients, n_repeats),
+  Pr_upd = round(runif(n_repeats*n_patients, 0, 1), 1)
+)
+
+```
+
+## Оценка средней вроятности события в каждом эксперименте
+
+```{r estimations}
+
+df_sample_mean <- df_all_repeats %>% 
+  group_by(n_exp) %>% 
+  dplyr::summarise(mean_Pr_upd = mean(Pr_upd)) %>% 
+  ungroup()
+
+ggplot(df_sample_mean, aes(x = mean_Pr_upd)) +
+  geom_histogram(color = 'black', fill = 'white', binwidth = 0.05) +
+  theme_bw()
+
+```
+
+## Количественные и качественные итоги
+
+```{r conclusions}
+
+error <- sqrt( mean((df_sample_mean$mean_Pr_upd - Pr_true)^2) )
+print(error)
+
+```
+
+## При увеличении выборки уменьшается ошибка в оценке вероятности. При этом истинная вероятность должна находиться в районе 0.5, так как при увеличении выборки верятность стремится к 0.5 (нормальное распределение).Также если истинная вероятность равна значению, сильно отклоняющемуся от 0,5, то ошибка в оценкке вероятности при увеличении выборки не будет существенно уменьшаться. 

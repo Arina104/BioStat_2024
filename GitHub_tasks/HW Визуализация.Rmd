@@ -1,0 +1,184 @@
+---
+title: "Untitled"
+author: "Arina"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r}
+hogwarts <- read_csv("C:/Users/Huawei/Desktop/biostat_2024-2025/Визуализация/data/hogwarts_2024.csv")
+```
+#Столбчатые диаграммы
+##Задание 1
+```{r}
+ggplot(hogwarts)+
+  geom_bar(aes(x = course),
+               fill = 'pink',colour = "black")+ 
+  theme_bw()
+```
+##Задание 2
+```{r}
+ggplot(hogwarts)+
+  geom_bar(aes(x = house,
+               fill = bloodStatus),  position = 'fill', colour = "black")+
+  theme_bw()
+```
+## По гистограмме видно, что наиболее количество маглорожденных студентов учится на факультете у Гриффиндора, а наименьшее - у Слизерина. Распределение студентов у Hufflepuff и Ravenclaw практически одинаковое. 
+
+
+
+##Задание 3
+```{r}
+hogwarts_1 <- hogwarts %>%
+  filter(hogwarts$bloodStatus == 'pure-blood' | hogwarts$bloodStatus == 'muggle-born')
+ggplot(hogwarts_1)+
+  geom_bar(aes(x = house,
+               fill = bloodStatus),  position = 'fill', colour = "black")+
+  geom_hline(yintercept = 0.50, color = 'black', linetype = 3, size = 0.8)+
+  labs(x = "Факультеты", y = "Доля студентов", fill = "Происхождение") +
+  scale_fill_discrete(labels = c('Маглорожденные', 'Чистокровные')) +
+  theme_bw()
+```
+
+#Боксплоты
+
+##Задание 1
+```{r}
+ggplot(hogwarts)+
+  geom_boxplot(aes(fct_reorder(house, week_3, .desc = TRUE), week_3)) +
+  theme_bw()
+```
+
+##Задание 2
+```{r,fig.width = 14, fig.height = 14}
+ggplot(hogwarts)+
+  geom_boxplot(aes(fct_reorder(house, week_3, .desc = TRUE), week_3, fill = bloodStatus), notch = TRUE) +
+  labs(x = 'Факультеты', y = 'Оценки за 3 неделю обучения', fill = 'Происхождение')+
+  theme_bw()
+
+
+```
+
+##Задание 3
+```{r}
+hogwarts |>
+  ggplot(aes(x= house, y = week_3, fill = bloodStatus)) +
+  labs(title = 'Оценки по факультетам', x = 'Факультеты', y = 'Оценки за 3 неделю обучения', fill = 'Происхождение') +
+  geom_boxplot(outliers = FALSE, notch = TRUE, linewidth = 0.5, width = 3) +
+  geom_jitter(size = 0.5, colour = 'grey50') +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5))
+  
+```
+
+#Разное
+
+##Задание 1
+```{r, fig.width = 10, fig.height = 10}
+For_color <- c('phoenix feather' = 'yellow', 'unicorn hair' = 'grey', 'dragon heartstring' = 'red')
+hogwarts |> 
+  filter(course == '5') |> 
+  mutate(id = as.factor(id)) |> 
+  ggplot() +
+  geom_segment(aes(x = 0, xend = result, y = fct_reorder(id, result), yend = id)) +
+  geom_point(aes(x = result, y = id, colour = wandCore), size = 3) +
+  scale_color_manual(values = c('phoenix feather' = 'yellow', 'unicorn hair' = 'grey', 'dragon heartstring' = 'red'))+
+  theme_bw()
+```
+
+##Задание 2
+```{r, fig.width = 14, fig.height = 7}
+ggplot(hogwarts)+
+  geom_bar(aes(x = `Astronomy exam`,  fill = (house == 'Slytherin')), alpha =0.5) +
+  labs(x = 'Оценки за экзамен по астрономии', y = 'Количество студентов', fill = 'Распределение баллов по астрономии')+
+  scale_fill_discrete(labels = c('Остальные факультеты', 'Факультет Слизерин')) +
+  theme_bw() +
+  theme(
+    axis.text = element_text(size = 18),
+    axis.title.x = element_text(size = 22),
+    axis.title.y = element_text(size = 20),
+    legend.text = element_text(size=18),
+    legend.title = element_text(size=20)) +
+  scale_y_discrete(name = 'Number of students') 
+```
+
+##Задание 3
+```{r, fig.width = 14, fig.height = 7}
+theme_custom <- 
+  theme_bw()+
+  theme(
+    axis.text = element_text(size = 18),
+    axis.title.x = element_text(size = 22),
+    axis.title.y = element_text(size = 20),
+    legend.text = element_text(size=18),
+    legend.title = element_text(size=20))
+
+ggplot(hogwarts)+
+  geom_bar(aes(x = `Astronomy exam`,  fill = (house == 'Slytherin')), alpha = 0.5) +
+  labs(x = 'Оценки за экзамен по астрономии', y = 'Количество студентов', fill = 'Распределение баллов по астрономии')+
+  scale_fill_discrete(labels = c('Остальные факультеты', 'Факультет Слизерин')) +
+  scale_y_discrete(name = 'Number of students') +
+  theme_custom
+
+```
+ИЛИ
+
+```{r, fig.width = 14, fig.height = 7}
+theme_custom_1 <- 
+  theme(panel.background = element_rect(fill = 'white', colour = 'grey')) +
+  theme(
+    axis.text = element_text(size = 18),
+    axis.title.x = element_text(size = 22),
+    axis.title.y = element_text(size = 20),
+    legend.text = element_text(size=18),
+    legend.title = element_text(size=20))
+
+ggplot(hogwarts)+
+  geom_bar(aes(x = `Astronomy exam`,  fill = (house == 'Slytherin')), alpha = 0.5) +
+  labs(x = 'Оценки за экзамен по астрономии', y = 'Количество студентов', fill = 'Распределение баллов по астрономии')+
+  scale_fill_discrete(labels = c('Остальные факультеты', 'Факультет Слизерин')) +
+  scale_y_discrete(name = 'Number of students') +
+  theme_custom_1
+```
+
+
+#фасетирование
+##Задание 1
+Для визуализации гистограмм, на мой взгляд, применим способ фасетирования как по строкам, так и по столбацам. Все зависит от того, что оценивается. Если, например, оценивается больше разброс признака, то лучше применять фасетирование по строкам, чтобы сравнить именнно то, на сколько сильно отклоняется признак от его среднего значения (дисперсию). Если же разброс значений небольшой и примерно одинкаовый, но при этом сильно варьируется высота столбцов (например, нужно оценить, количество или частоту признака), то лучше использовать фасетирование по по столбцам. 
+Для визуализации violin-plot лучше всего использовать фасетирование по столбцам, так как обычно данный тип графиков получается более вытянутым, удобнее сравнивать, когда графики рядом. Но думаю, что здесь также применимо правило, указанное ниже, так как данные и способы визуализации могут быть разные.
+
+Общее правило: если нужно что-то сранить по оси х, то фасетирование по строкам. Если нужно сравнить по оси у, то фасетирование по столбцам.
+
+
+##Задание 2
+```{r, fig.width = 5, fig.height = 3}
+ggplot(hogwarts)+
+  geom_histogram(aes(x = `Herbology exam`), bins = 20, colour = 'green', fill = 'grey') +
+  facet_grid(.~house) + 
+  labs(x = 'Оценки за экзамен по астрономии', y = 'Количество студентов', fill = 'Распределение баллов по астрономии')+
+   scale_fill_discrete(labels = c('Остальные факультеты', 'Факультет Слизерин')) +
+  theme_bw()
+```
+
+##Задание 3
+```{r}
+ggplot(hogwarts)+
+  geom_density(aes(x = `Defence against the dark arts exam`), 
+               fill = "turquoise1", 
+               colour = "grey49", 
+               alpha = 0.5)+
+  geom_density(aes(x = `Herbology exam`), 
+               fill = "green", 
+               colour = "grey49",
+               alpha = 0.3)+ 
+  facet_grid(.~sex) +
+  theme_custom
+```
+
