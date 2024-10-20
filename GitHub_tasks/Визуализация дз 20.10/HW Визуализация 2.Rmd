@@ -1,0 +1,376 @@
+---
+title: "Untitled"
+author: "Arina"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(ggpubr)
+```
+
+```{r}
+hogwarts <- read_csv("C:/Users/Huawei/Desktop/biostat_2024-2025/Визуализация/data/hogwarts_2024.csv")
+```
+#Диаграммы рассеяния
+##Задание 1
+
+```{r}
+
+hogwarts |>
+  ggplot() +
+  geom_point(aes(x = result,
+                 y = `Herbology exam`)) +
+  geom_smooth(aes(x = result,
+                 y = `Herbology exam`), se=FALSE, method = 'lm') +
+  theme_bw()
+
+```
+#с использованием координат х и у один раз
+```{r}
+hogwarts |>
+  ggplot(aes(x = result,
+                 y = `Herbology exam`)) +
+  geom_point() +
+  geom_smooth(method = 'lm', se = FALSE) +
+  theme_bw()
+```
+Интерпретация: итоговая оценка прямо пропорционально зависит от оценки по экзамену по травологии. При получении высокой оценки по экзамену повышается итоговый балл. Прямопропорциональная зависимость
+
+##Задание 2
+```{r}
+Herbology <- hogwarts |>
+  ggplot() +
+  geom_point(aes(x = result,
+             y = `Herbology exam`, colour = house)) +
+  scale_color_manual(values = c("Gryffindor" = "#C50000", 
+                             "Hufflepuff" = "#ECB939", 
+                             "Ravenclaw" = "#41A6D9", 
+                             "Slytherin" = "#1F5D25")) +
+  geom_smooth(aes(x = result,
+             y = `Herbology exam`), method = 'lm', se = FALSE, color = 'black', linewidth = 0.7) +
+  theme_bw()
+
+
+Divinations <- hogwarts |>
+  ggplot() +
+  geom_point(aes(x = result,
+             y = `Divinations exam`, colour = house)) +
+  scale_color_manual(values = c("Gryffindor" = "#C50000", 
+                             "Hufflepuff" = "#ECB939", 
+                             "Ravenclaw" = "#41A6D9", 
+                             "Slytherin" = "#1F5D25")) +
+  geom_smooth(aes(x = result,
+             y = `Divinations exam`), method = 'lm', se = FALSE, color = 'black', linewidth = 0.7) +
+  theme_bw()
+
+ 
+Muggle <- hogwarts |>
+  ggplot() +
+  geom_point(aes(x = result,
+             y = `Muggle studies exam`, colour = house)) +
+  scale_color_manual(values = c("Gryffindor" = "#C50000", 
+                             "Hufflepuff" = "#ECB939", 
+                             "Ravenclaw" = "#41A6D9", 
+                             "Slytherin" = "#1F5D25")) +
+  geom_smooth(aes(x = result,
+             y = `Muggle studies exam`), method = 'lm', se = FALSE, color = 'black', linewidth = 0.7) +
+  theme_bw()
+
+ 
+Potions <- hogwarts |>
+  ggplot() +
+  geom_point(aes(x = result,
+             y = `Potions exam`, colour = house)) +
+  scale_color_manual(values = c("Gryffindor" = "#C50000", 
+                             "Hufflepuff" = "#ECB939", 
+                             "Ravenclaw" = "#41A6D9", 
+                             "Slytherin" = "#1F5D25")) +
+  geom_smooth(aes(x = result,
+             y = `Potions exam`), method = 'lm', se = FALSE, color = 'black', linewidth = 0.7) +
+  theme_bw()
+
+
+ggarrange(plotlist = list(Herbology, Divinations, Muggle, Potions))
+```
+Для всех экзаменов, кроме Potions exam, наблюдается прямо пропорциональная зависимость между оценкой за экзамен и итоговым баллом (результатом). Для Potions exam не наблюдается такой зависимости. Возможно только слабая обратно пропорциональная зависимость.
+
+
+##Задание 3
+```{r}
+Herbology_1 <- hogwarts |>
+  ggplot(aes(x = result,
+             y = `Herbology exam`, colour = house)) +
+  geom_point() +
+  scale_color_manual(values = c("Gryffindor" = "#C50000", 
+                             "Hufflepuff" = "#ECB939", 
+                             "Ravenclaw" = "#41A6D9", 
+                             "Slytherin" = "#1F5D25")) +
+  geom_smooth(aes(x = result,
+             y = `Herbology exam`, color = house), method = 'lm', se = FALSE, linewidth = 0.7) +
+  theme_bw()
+
+
+Divinations_1 <- hogwarts |>
+  ggplot(aes(x = result,
+             y = `Divinations exam`, colour = house)) +
+  geom_point() +
+  scale_color_manual(values = c("Gryffindor" = "#C50000", 
+                             "Hufflepuff" = "#ECB939", 
+                             "Ravenclaw" = "#41A6D9", 
+                             "Slytherin" = "#1F5D25")) +
+  geom_smooth(aes(x = result,
+             y = `Divinations exam`, color = house), method = 'lm', se = FALSE, linewidth = 0.7) +
+  theme_bw()
+
+ 
+Muggle_1 <- hogwarts |>
+  ggplot(aes(x = result,
+             y = `Muggle studies exam`, colour = house)) +
+  geom_point() +
+  scale_color_manual(values = c("Gryffindor" = "#C50000", 
+                             "Hufflepuff" = "#ECB939", 
+                             "Ravenclaw" = "#41A6D9", 
+                             "Slytherin" = "#1F5D25")) +
+  geom_smooth(aes(x = result,
+             y = `Muggle studies exam`, color = house), method = 'lm', se = FALSE, linewidth = 0.7) +
+  theme_bw()
+
+ 
+Potions_1 <- hogwarts |>
+  ggplot(aes(x = result,
+             y = `Potions exam`, colour = house)) +
+  geom_point() +
+  scale_color_manual(values = c("Gryffindor" = "#C50000", 
+                             "Hufflepuff" = "#ECB939", 
+                             "Ravenclaw" = "#41A6D9", 
+                             "Slytherin" = "#1F5D25")) +
+  geom_smooth(aes(x = result,
+             y = `Potions exam`, color = house), method = 'lm', se = FALSE, linewidth = 0.7) +
+  theme_bw()
+
+
+ggarrange(plotlist = list(Herbology_1, Divinations_1, Muggle_1, Potions_1))
+```
+
+
+#geom_col
+##Задание 1
+```{r}
+For_semest <- hogwarts |>
+  group_by(house) |>
+  summarise(points = sum(week_1, week_2, week_3, week_4, week_5, week_6, week_7, week_8, week_9, week_10, week_11, week_12, week_13, week_14, week_15, week_16, week_17))
+
+ggplot(For_semest) +
+  geom_col(aes(x = house,
+               y = points)) +
+  theme_bw()
+
+```
+Распределение получилось таким, так как сумма баллов факультета Ravenclaw больше
+
+#Задание 2
+```{r}
+For_semest <- hogwarts |>
+  group_by(house) |>
+  summarise(points = sum(week_1, week_2, week_3, week_4, week_5, week_6, week_7, week_8, week_9, week_10, week_11, week_12, week_13, week_14, week_15, week_16, week_17))
+
+ggplot(For_semest) +
+  ylim(0, 8000) +
+  geom_col(aes(fct_reorder(house, points, .desc = TRUE), points)) +
+  geom_text(aes(y = points, x = house, label = points), size = 6, hjust = 0.5, vjust = -0.2) +
+  labs(x = 'Факультеты', y = 'Сумма баллов за первый семестр') +
+  theme_bw()
+```
+
+```{r}
+For_semest <- hogwarts |>
+  group_by(house) |>
+  summarise(points = sum(week_1, week_2, week_3, week_4, week_5, week_6, week_7, week_8, week_9, week_10, week_11, week_12, week_13, week_14, week_15, week_16, week_17))
+
+ggplot(For_semest) +
+  geom_col(aes(fct_reorder(house, points, .desc = TRUE), points)) +
+  geom_label(aes(y = points, x = house, label = points), size = 6, hjust = 0.5, vjust = -0.2) +
+  labs(x = 'Факультеты', y = 'Сумма баллов за первый семестр') +
+  ylim(0, 8000) +
+  theme_bw()
+```
+Распределение осталось таким же, но теперь можно точно определить, на каком факультете больше баллов (Слизерин или Гирффиндор), так как визуально столбики одинаковые. Текстовые метки решают данную проблему 
+
+##Задание 3
+```{r}
+For_semest_1 <- hogwarts |>
+  group_by(house, sex) |>
+  summarise(points = sum(week_1, week_2, week_3, week_4, week_5, week_6, week_7, week_8, week_9, week_10, week_11, week_12, week_13, week_14, week_15, week_16, week_17)) |>
+  mutate(houseAndsex = paste0(house, ' ', sex))
+
+plot <- ggplot(For_semest_1) +
+  geom_col(aes(x = points, y = houseAndsex, fill = house), position = 'dodge2') +
+  scale_fill_manual(values = c("Gryffindor" = "#C50000", 
+                             "Hufflepuff" = "#ECB939", 
+                             "Ravenclaw" = "#41A6D9", 
+                             "Slytherin" = "#1F5D25")) +
+  geom_label(aes(x = 6000, y = houseAndsex, label = points), position = 'dodge2', size = 3, hjust = 0.5, vjust = 0.4) +
+  labs(title = 'Распределение баллов за первый семестр', x = 'Факультеты', y = 'Сумма баллов за первый семестр \n для мальчиков и девочек') +
+  scale_x_continuous(breaks = seq(-4000, 8000, 1000), limits = c(-4000,8000)) +
+  theme_bw()
+plot
+
+ggsave('Распределение.png', plot, dpi = 300)
+```
+
+##Задание 4
+coord_flip()
+Функция может быть полезна, когда необходимо отобразить долю или процент
+Плюсы: можно наглядно увидеть долю, например, сколько "места" занимает определенный признак (то есть увидеть часть от целого)
+Минусы: не всегда удачная визуализация. 
+
+
+#Разное
+##задание 1
+
+```{r}
+g1 <- ggplot(hogwarts) +
+  geom_histogram(aes(x =`Potions exam`), bins = 50, colour = 'green', fill = 'grey') +
+  theme_bw()
+
+g2<- ggplot(hogwarts) +
+  geom_histogram(aes(x = `Care of magical creatures exam`), bins = 50, colour = 'green', fill = 'grey') +
+  theme_bw()
+
+g1_2 <- ggarrange(plotlist = list(g1, g2))
+
+
+g3_4 <- ggplot(hogwarts)+
+  geom_density(aes(x = `Potions exam`), 
+               fill = "turquoise1", 
+               colour = "grey49", 
+               alpha = 0.5)+
+  geom_density(aes(x = `Care of magical creatures exam`), 
+               fill = "green", 
+               colour = "grey49",
+               alpha = 0.3)+ 
+  facet_grid() +
+  theme_bw()
+
+g3 <- hogwarts |>
+  ggplot() +
+  geom_point(aes(x = `Care of magical creatures exam`,
+                 y = `Herbology exam`)) +
+  geom_smooth(aes(x = `Care of magical creatures exam`,
+                 y = `Herbology exam`), se=FALSE, method = 'lm') +
+  theme_bw()
+
+
+g4 <- ggplot(hogwarts) +
+  geom_violin(aes(x = bloodStatus, y = `Herbology exam`, fill = bloodStatus)) +
+  theme_test() +
+  theme(legend.position = 'none')
+  
+g4_1 <- ggplot(hogwarts) +  
+  geom_violin(aes(x = bloodStatus, y =`Care of magical creatures exam`, fill = bloodStatus)) +
+  theme_test() +
+  theme(legend.position = 'none')
+
+g4_2 <- ggarrange(plotlist = list(g4, g4_1)) 
+g4_2
+
+ggplot(hogwarts) +  
+  geom_violin(aes(x = bloodStatus, y = `Herbology exam`, fill = bloodStatus)) +
+  geom_violin(aes(x = bloodStatus, y = `Care of magical creatures exam`, fill = bloodStatus)) +
+  facet_grid(`Herbology exam` ~ `Care of magical creatures exam`) +
+  theme_test() +
+  theme(legend.position = 'none')
+
+
+g6 <- ggarrange(plotlist = list(g4, g5))
+
+
+g7 <- ggarrange(plotlist = list(g3_4, g3))
+g8 <- ggarrange(plotlist = list(g7, g4_2), nrow = 2)
+g8
+
+```
+
+##Задание 2
+```{r}
+plot_1 <- ggplot(hogwarts) +
+  geom_col(aes(x = bloodStatus,
+               y = `Potions exam`)) +
+  theme_bw()
+
+plot_2 <- ggplot(hogwarts) +
+  geom_histogram(aes(x =`Potions exam`), bins = 50, colour = 'green', fill = 'grey') +
+  theme_bw()
+
+p1 <- hogwarts |> 
+  group_by(bloodStatus) |>
+  summarise(points = sum(`Potions exam`)) 
+
+plot_3 <- ggplot(p1) +
+  geom_col(aes(x = '',
+            y = points, fill = bloodStatus), position = position_stack(reverse = TRUE)) + 
+  coord_polar(theta = 'y') +
+  geom_label(aes(x = '', y = points, label = points), position = position_stack(vjust = 0.5, reverse = TRUE)) +
+  labs(title = 'Распределение суммы баллов за \n экзамен по зелеваренью по происхождению', size = 15) +
+  theme_void()
+
+plot_4 <- ggarrange(plotlist = list(plot_1, plot_3), ncol= 2, widths = c(1,1))
+ggarrange(plotlist = list(plot_4, plot_2), nrow =2)
+
+
+```
+
+
+
+#Воспроизведение графика
+
+```{r}
+plot_new <- hogwarts |>
+  group_by(sex, house) |>
+  summarise(result)
+
+gr <- c('Девочки', 'Мальчики')
+names(gr) <- c('Девочки', 'Мальчики')
+
+plot_new |>
+  ggplot(aes(x = house, y = result, fill = house)) +
+  geom_violin(aes(x = house, y = result))+
+  scale_fill_manual(values = c("Gryffindor" = "#C50000", 
+                             "Hufflepuff" = "#ECB939", 
+                             "Ravenclaw" = "#41A6D9", 
+                             "Slytherin" = "#1F5D25"),
+                    labels= c('Gryffindor'= 'Гриффиндор', 
+                              'Hufflepuff'= 'Пуффендуй', 
+                              'Ravenclaw'= 'Когтевран',
+                              'Slytherin'= 'Слизерин')) +
+  scale_y_continuous(breaks=seq(-350, 250, 50))+
+  facet_grid(.~sex, labeller = labeller(sex = gr))+
+  geom_hline(yintercept = 0, linetype = 'dotted',size = 1,  color = 'red') +
+  labs(y = 'Количество очков',
+       title = 'Баллы студентов Хогвартса',
+       subtitle = 'Распределение числа баллов у студентов различных факультетов Хогвартса в 2023-2024 учебном году',
+       fill = 'Факультет') +
+  theme_test() +
+  theme(panel.border = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        legend.justification = 'bottom',
+        legend.position = 'inside',
+        legend.text = element_text(face = 'italic'),
+        plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(size = 9, hjust = 0.5, color = 'brown'))
+
+```
+
+
+
+
+
+```{r}
+
+```
+
