@@ -1,0 +1,723 @@
+---
+title: "automatization_notebook_02"
+output: word_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(psych)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(flextable)
+library(ggcorrplot)
+library(ggpubr)
+library(broom)
+
+```
+
+```{r}
+install.packages("ggbeeswarm")
+library(ggbeeswarm)
+installed.packages("ggcorrplot")
+library(ggcorrplot)
+install.packages("RColorBrewer")  
+library(RColorBrewer)
+```
+
+# Чтение данных
+
+В вашем варианте нужно использовать датасет food.
+
+```{r}
+data_food <- read_csv("C:/Users/Huawei/Desktop/biostat_2024-2025/Работа с датасетом. Ева Шелли. 1 занятие/food.csv")
+
+```
+
+# Выведите общее описание данных
+
+```{r}
+data_food %>%
+  glimpse()
+```
+
+# Очистка данных
+
+1) Уберите переменные, в которых пропущенных значений больше 20% или уберите субъектов со слишком большим количеством пропущенных значений. Или совместите оба варианта. Напишите обоснование, почему вы выбрали тот или иной вариант:
+
+**Обоснование**: 
+
+2) Переименуйте переменные в человекочитаемый вид (что делать с пробелами в названиях?);
+
+3) В соответствии с описанием данных приведите переменные к нужному типу (numeric или factor);
+
+4) Отсортируйте данные по возрасту по убыванию; #по углеводам
+
+5) Сохраните в файл outliers.csv субъектов, которые являются выбросами (например, по правилу трёх сигм) — это необязательное задание со звёздочкой;
+
+6) Отфильтруйте датасет так, чтобы остались только Rice и Cookie (переменная Category и есть группирующая);
+
+7) Присвойте получившийся датасет переменной "cleaned_data".
+
+
+#Убираем пропущенные значения
+```{r}
+sum(complete.cases(data_food))
+sum(is.na(data_food))
+```
+В датасете нет пропущенных значений, но есть много нулевых значений, которыев зависимости от цели, можно убрать (например, переменные с большим количеством 0 и значений близких к 0, или же категрия продукта большим количеством 0). В данном случае нет конкретной цели и поэтому мы не можем убрать переменнные или категории продуктов с большим количеством нулей. 
+Но ниже приведены чанки, где подсчитаны нулевые значения по столбцам и по строчкам
+
+#Переименуем переменные
+```{r}
+data_food_2 <- data_food %>%
+  rename(`Категория продуктов` = 'Category', 
+         `Описание продукта` = 'Description',
+         Идентификатор = 'Nutrient Data Bank Number',
+         `Содержание альфа-каротина,мкг` = 'Data.Alpha Carotene',
+         `Содержание бетта-каротина,мкг` = 'Data.Beta Carotene',
+         `Содержание бетта-криптоксантина,мкг` = 'Data.Beta Cryptoxanthin',
+         `Содержание углеводов, г` = 'Data.Carbohydrate',
+         `Уровень холестерина, мг` = 'Data.Cholesterol',
+         `Содержание холина,мг` = 'Data.Choline',
+         `Содержание клетчатки,г` = 'Data.Fiber', 
+         `Содержание лютеина и зеаксантина,мкг` = 'Data.Lutein and Zeaxanthin',
+         `Содержание ликопина,мкг` = 'Data.Lycopene',
+         `Содержание неацина,мг` = 'Data.Niacin',
+         `Содержание белка,г` = 'Data.Protein', 
+         `Содержание ретинола,мкг` = 'Data.Retinol', 
+         `Содержание рибофлавина,мг` = 'Data.Riboflavin',
+         `Содержание селена,мкг` = 'Data.Selenium',
+         `Общее количество сахара,Г` = `Data.Sugar Total`,
+         `Содержание тиамина,мг` = 'Data.Thiamin',
+         `Содержание воды,г` = 'Data.Water',
+         `Мононасыщенные жиры,г`=`Data.Fat.Monosaturated Fat`,
+         `Полинасыщенные жиры,г`=`Data.Fat.Polysaturated Fat`,
+         `Насыщенные жиры,г` = `Data.Fat.Saturated Fat`,
+         `Общее содержание липидов,г` = `Data.Fat.Total Lipid`,
+         `Содержание кальция,мг` = `Data.Major Minerals.Calcium`,
+         `Содержание меди,мг` = `Data.Major Minerals.Copper`, 
+         `Содержание железа,мг` = `Data.Major Minerals.Iron`,
+         `Содержание магния,мг` = `Data.Major Minerals.Magnesium`,
+         `Содержание фосфора,мг` = `Data.Major Minerals.Phosphorus`,
+         `Содержания калия,мг` = `Data.Major Minerals.Potassium`,
+         `Содержание натрия,мг` = `Data.Major Minerals.Sodium`,
+         `Содержание цинка,мг` = `Data.Major Minerals.Zinc`,
+         `Содержание витамина А,мкг` = `Data.Vitamins.Vitamin A - RAE`,
+         `Содержание витамина В12,мкг` = `Data.Vitamins.Vitamin B12`,
+         `Содержание витамина В6,мкг ` = `Data.Vitamins.Vitamin B6`,
+         `Содержание витамина С,мкг` = `Data.Vitamins.Vitamin C`,
+         `Содержание витамина Е,мкг` = `Data.Vitamins.Vitamin E`,
+         `Содержание витамина К,мкг` = `Data.Vitamins.Vitamin K`
+         ) %>%
+  glimpse()
+```
+
+#Изменим тип переменных
+```{r}
+data_food_2 <- data_food_2 %>%
+  mutate(`Категория продуктов` = as.factor(`Категория продуктов`), 
+         `Описание продукта` = as.factor(`Описание продукта`),
+         Идентификатор = as.factor(Идентификатор),
+         `Содержание углеводов` = as.numeric(`Содержание углеводов, г`),
+         `Содержание альфа-каротина,мкг` = as.numeric(`Содержание альфа-каротина,мкг`),
+         `Содержание бетта-каротина,мкг` = as.numeric(`Содержание бетта-каротина,мкг`),
+         `Содержание бетта-криптоксантина,мкг` = as.numeric(`Содержание бетта-криптоксантина,мкг`),
+         `Уровень холестерина, мг` = as.numeric(`Уровень холестерина, мг`),
+         `Содержание холина,мг`= as.numeric(`Содержание холина,мг`),
+         `Содержание клетчатки,г` = as.numeric(`Содержание клетчатки,г`),
+         `Содержание лютеина и зеаксантина,мкг` = as.numeric(`Содержание лютеина и зеаксантина,мкг`),
+         `Содержание ликопина,мкг` = as.numeric(`Содержание ликопина,мкг`),
+         `Содержание неацина,мг` = as.numeric(`Содержание неацина,мг` ),
+         `Содержание белка,г`  = as.numeric(`Содержание белка,г`),
+         `Содержание ретинола,мкг` = as.numeric(`Содержание ретинола,мкг`),
+         `Содержание рибофлавина,мг` = as.numeric(`Содержание рибофлавина,мг`),
+         `Содержание селена,мкг` =  as.numeric(`Содержание селена,мкг`),
+         `Общее количество сахара,Г`  = as.numeric(`Общее количество сахара,Г`),
+         `Содержание тиамина,мг` = as.numeric(`Содержание тиамина,мг`),
+         `Содержание воды,г` = as.numeric(`Содержание воды,г`),
+         `Мононасыщенные жиры,г` = as.numeric(`Мононасыщенные жиры,г`),
+         `Полинасыщенные жиры,г` = as.numeric(`Полинасыщенные жиры,г`),
+         `Насыщенные жиры,г`  = as.numeric(`Насыщенные жиры,г`),
+         `Общее содержание липидов,г` = as.numeric(`Общее содержание липидов,г`),
+         `Содержание кальция,мг` = as.numeric(`Содержание кальция,мг`),
+         `Содержание меди,мг` = as.numeric(`Содержание меди,мг`),
+         `Содержание железа,мг` = as.numeric(`Содержание железа,мг`),
+         `Содержание магния,мг` = as.numeric(`Содержание магния,мг`),
+         `Содержание фосфора,мг`= as.numeric(`Содержание фосфора,мг`),
+         `Содержания калия,мг` = as.numeric(`Содержания калия,мг`),
+         `Содержание натрия,мг` = as.numeric(`Содержание натрия,мг`),
+         `Содержание цинка,мг` = as.numeric(`Содержание цинка,мг`),
+         `Содержание витамина А,мкг` = as.numeric(`Содержание витамина А,мкг`),
+         `Содержание витамина В12,мкг` = as.numeric(`Содержание витамина В12,мкг`),
+         `Содержание витамина В6,мкг ` = as.numeric( `Содержание витамина В6,мкг `),
+         `Содержание витамина С,мкг`  = as.numeric(`Содержание витамина С,мкг` ),
+         `Содержание витамина Е,мкг` = as.numeric(`Содержание витамина Е,мкг`),
+         `Содержание витамина К,мкг` = as.numeric(`Содержание витамина К,мкг`),
+         `Содержание витамина К,мкг` = as.numeric(`Содержание витамина К,мкг`)) %>%
+  glimpse()
+```
+
+#Сортируем по углеводам
+```{r}
+data_food_2 <-
+  data_food_2 %>%
+  arrange(`Содержание углеводов, г`)
+```
+
+#Фильтруем по Rice и Cookie
+```{r}
+cleaned_data <- data_food_2 %>%
+  filter(`Категория продуктов` %in% c('Rice', 'Cookie'))
+```
+
+#Выбросы
+```{r}
+#Определяем выбросы методом межквартильного размаха
+quant_25 <- quantile(cleaned_data$`Содержание углеводов, г`, 0.25)
+quant_75 <- quantile(cleaned_data$`Содержание углеводов, г`, 0.75)
+
+Range <- quant_75 - quant_25
+
+upper_q <- quant_75 + 1.5*Range
+lower_q <- quant_25 - 1.5*Range
+
+outlier_data <- which(cleaned_data$`Содержание углеводов, г` < lower_q | cleaned_data$`Содержание углеводов, г` > upper_q)
+outlier_data
+```
+Нет выбросов
+
+#Определение выбросов по правилу трех сигм
+```{r}
+#Находим среднее значение и стандартное отклонение
+mean <- mean(cleaned_data$`Содержание углеводов, г`)
+sd <- sd(cleaned_data$`Содержание углеводов, г`)
+
+#Определяем границы
+upper <- mean + 3*sd
+lower <- mean - 3*sd
+
+#Отфильтровываем выбросы и сохраняем количество строк с выбросами
+outliers_sigm <- nrow(cleaned_data[cleaned_data$`Содержание углеводов, г` < lower & cleaned_data$`Содержание углеводов, г` > upper, ])
+
+outliers_sigm
+
+```
+По правилу трех сигм выбросов нет
+
+
+#Считаем количестов нулей в переменных
+```{r}
+df <- tibble('Количество нулей' = colSums(cleaned_data == 0))
+df1 <- cbind('Переменные' = names(cleaned_data), df)
+
+df1
+```
+
+#Убираем переменные с большим количеством нулей
+```{r}
+data_food_cleaned <- cleaned_data %>%
+  select(!c(`Содержание ликопина,мкг`, `Содержание альфа-каротина,мкг`, `Содержание бетта-криптоксантина,мкг`, `Уровень холестерина, мг`, `Содержание бетта-каротина,мкг`, `Содержание ретинола,мкг`, `Содержание витамина С,мкг`,`Содержание витамина В12,мкг`, `Содержание лютеина и зеаксантина,мкг`))
+```
+
+# Сколько осталось переменных?
+```{r}
+data_food_cleaned %>%
+  glimpse()
+
+#Осталось 29 переменных
+```
+
+#Фильтруем датасет по строчкам (убираем  строчки с количеством нулей более 10)
+```{r}
+data_food_cleaned_1 <- data_food_cleaned %>%
+  mutate(Пропуск = rowSums(data_food_cleaned == 0)) %>%
+  filter(!Пропуск > 10)
+```
+
+# Сколько осталось случаев?
+```{r}
+nrow(data_food_cleaned_1)
+
+#Осталось 114 случаев
+```
+# Есть ли в данных идентичные строки? (В исходном датасете с нулевыми значениями)
+```{r}
+data_food_dup <- 
+  duplicated(cleaned_data) %>%
+  sum()
+
+data_food_dup
+
+#В датасете нет дубликатов
+```
+
+# Сколько всего переменных с пропущенными значениями в данных и сколько пропущенных точек в каждой такой переменной?
+
+В датасете нет пропущенных значений
+
+
+# Описательные статистики
+
+## Количественные переменные
+
+1) Рассчитайте для всех количественных переменных для каждой группы (Category):
+
+1.1) Количество значений;
+
+1.2) Количество пропущенных значений;
+
+1.3) Среднее;
+
+1.4) Медиану;
+
+1.5) Стандартное отклонение;
+
+1.6) 25% квантиль и 75% квантиль;
+
+1.7) Интерквартильный размах;
+
+1.8) Минимум;
+
+1.9) Максимум;
+
+1.10) 95% ДИ для среднего - задание со звёздочкой.
+
+#Создаем список статитстики
+```{r}
+Stat <- list(
+  `_Колчество значений` = ~length(.x) %>% as.character(),
+  `_Сумма NA` = ~sum(is.na(.x)) %>% as.character(),
+  `_Среднее значение` = ~ifelse(sum(!is.na(.x)) == 0, 'н/п', mean(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+  `_Стандартное отклонение` = ~ifelse(sum(!is.na(.x)) < 3, 'н/п', sd(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+  `_Медиана` = ~ifelse(sum(!is.na(.x)) == 0, 'н/п', median(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+  `_Межквартильный размах` = ~ifelse(sum(!is.na(.x)) == 0, 'н/п', paste0(quantile(.x,0.25, na.rm = TRUE) %>% round(2), ' - ', quantile(.x, 0.75, na.rm = TRUE) %>% round(2))),
+  `_Миним - Максим знач` = ~ifelse(sum(!is.na(.x)) == 0, 'н/п', paste0(min(.x, na.rm = TRUE) %>% round(2), ' - ', max(.x, na.rm = TRUE) %>% round(2))),
+  `_ДИ 95% для среднего` = ~sd(.x, na.rm = TRUE) %>% round(2) %>% as.character())
+```
+
+#Применяем функции к датасету и создаем таблицу со статистикой
+```{r}
+library(flextable)
+
+cleaned_data %>%
+  select(`Категория продуктов`, (where(is.numeric))) %>%
+  group_by(`Категория продуктов`) %>%
+  summarise(across(where(is.numeric), Stat)) %>%
+  pivot_longer(!`Категория продуктов`) %>%
+  separate(name, into = c("Variable", "Statistics"), sep = "__") %>%
+  
+  flextable() %>%
+  theme_box() %>%
+  align(align = 'center', part = 'all')  %>%
+  merge_v(c('Variable', 'Категория продуктов'))
+  
+```
+
+
+## Категориальные переменные
+
+1) Рассчитайте для всех категориальных переменных для каждой группы (Category):
+
+1.1) Абсолютное количество;
+
+1.2) Относительное количество внутри группы;
+
+1.3) 95% ДИ для доли внутри группы - задание со звёздочкой.
+
+#Создаем таблицу с абсолютным количеством и относительным количеством продуктов в категориях 
+```{r}
+table <- cleaned_data %>%
+  group_by(`Категория продуктов`) %>%
+   summarise(`Absolute frequency` = n(),
+             `Relative frequency, %` = (n() / nrow(test_1))*100) %>%
+  mutate_if(is.numeric, round, digits = 2) %>%
+  flextable() %>%
+  theme_box() %>%
+  align(align = 'center', part = 'all') 
+
+table
+```
+
+
+
+# Визуализация
+
+## Количественные переменные
+
+1) Для каждой количественной переменной сделайте боксплоты по группам. Расположите их либо на отдельных рисунках, либо на одном, но читаемо;
+
+2) Наложите на боксплоты beeplots - задание со звёздочкой.
+
+3) Раскрасьте боксплоты с помощью библиотеки RColorBrewer.
+
+
+```{r, fig.height=16, fig.width=16}
+g1 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y =`Содержание альфа-каротина,мкг`), outliers = FALSE) +
+  ylab(label = 'Cодержание альфа-каротина') +
+  theme_bw() +
+  theme(axis.title.x = element_blank()) +
+   scale_color_brewer(palette = "RdYlGn")
+
+g2 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`,
+                   y =`Содержание бетта-каротина,мкг`), outliers = FALSE) +
+  ylab(label = 'Cодержание бетта-каротина') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g3 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y =`Содержание бетта-криптоксантина,мкг`), outliers = FALSE) +
+  ylab(label = 'Cодержание бетта-криптоксантина') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g4 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y =`Содержание углеводов, г`), outliers = FALSE) +
+  ylab(label = 'Cодержание углеводов') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g5 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y =`Уровень холестерина, мг`), outliers = FALSE) +
+  ylab(label = 'Cодержание холестерина') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g6 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание холина,мг`), outliers = FALSE) +
+  ylab(label = 'Cодержание холина') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g7 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание клетчатки,г`), outliers = FALSE) +
+  ylab(label = 'Cодержание клетчатки') +
+  theme_bw()+
+  theme(axis.title.x = element_blank())
+
+g8 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание неацина,мг`), outliers = FALSE) +
+  ylab(label = 'Cодержание неацина') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g9 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание белка,г`), outliers = FALSE) +
+  ylab(label = 'Cодержание белка') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g10 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание рибофлавина,мг`), outliers = FALSE) +
+  ylab(label = 'Cодержание рибофлавина') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g11 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание селена,мкг`), outliers = FALSE) +
+  ylab(label = 'Cодержание селена') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g12 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Общее количество сахара,Г`), outliers = FALSE) +
+  ylab(label = 'Cодержание сахара') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g13 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание тиамина,мг`), outliers = FALSE) +
+  ylab(label = 'Cодержание тиамина') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g14 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание воды,г`), outliers = FALSE) +
+  ylab(label = 'Cодержание воды') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g15 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Мононасыщенные жиры,г`), outliers = FALSE) +
+  ylab(label = 'Cодержание мононасыщенных жиров') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g16 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Полинасыщенные жиры,г`), outliers = FALSE) +
+  ylab(label = 'Cодержание полинасыщенных жиров') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g17 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Насыщенные жиры,г`), outliers = FALSE) +
+  ylab(label = 'Cодержание насыщенных жиров') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g18 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Общее содержание липидов,г`), outliers = FALSE) +
+  ylab(label = 'Cодержание жиров общее') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g19 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание кальция,мг`), outliers = FALSE) +
+  ylab(label = 'Cодержание кальция') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g20 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание меди,мг`), outliers = FALSE) +
+  ylab(label = 'Cодержание меди') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g21 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание железа,мг`), outliers = FALSE) +
+  ylab(label = 'Cодержание железа') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g22 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание магния,мг`), outliers = FALSE) +
+  ylab(label = 'Cодержание магния') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g23 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание фосфора,мг`), outliers = FALSE) +
+  ylab(label = 'Cодержание фосфора') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g24 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержания калия,мг`), outliers = FALSE) +
+  ylab(label = 'Cодержание калия') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g25 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание натрия,мг`), outliers = FALSE) +
+  ylab(label = 'Cодержание натрия') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g26 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание цинка,мг`), outliers = FALSE) +
+  ylab(label = 'Cодержание цинка') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g27 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание витамина А,мкг`), outliers = FALSE) +
+  ylab(label = 'Cодержание витамина А') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g28 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание витамина В6,мкг `), outliers = FALSE) +
+  ylab(label = 'Cодержание витамина В6') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g29 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание витамина Е,мкг`), outliers = FALSE) +
+  ylab(label = 'Cодержание витамина Е') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+g30 <- ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание витамина К,мкг`), outliers = FALSE) +
+  ylab(label = 'Cодержание витамина К') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+
+
+ggarrange(g1,g2,g3,g4,g5,g6,g7,g8, g9,g10,g11,g12,g13,g14,g15,g16, g17,g18,g19,g20,g21,g22,g23,g24, g25,g26,g27,g28,g29,g30)
+  
+```
+
+```{r}
+ggplot(data_food_filtred) +
+  geom_boxplot(aes(x = `Категория продуктов`, y =`Содержание альфа-каротина,мкг`), outliers = FALSE) +
+  ylab(label = 'Cодержание альфа-каротина') +
+  scale_color_brewer(palette = "RdYlGn") +
+  theme_bw() +
+  theme(axis.title.x = element_blank()) 
+```
+
+```{r}
+par(xpd = FALSE)
+ggplot(data_food_filtred) +
+  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание витамина В6,мкг `), outliers = FALSE) +
+  ylab(label = 'Cодержание витамина В6') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание витамина В6,мкг `)) +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+```
+
+```{r}
+ggplot(cleaned_data) +
+  geom_boxplot(aes(x = `Категория продуктов`, y =`Содержание углеводов, г`)) +
+  ylab(label = 'Cодержание углеводов') +
+  theme_bw() +
+  theme(axis.title.x = element_blank())
+```
+
+
+## Категориальные переменные
+
+1) Сделайте подходящие визуализации категориальных переменных. Обоснуйте, почему выбрали именно этот тип.
+
+```{r}
+ggplot(cleaned_data) +
+  geom_bar(aes(x = `Категория продуктов`, fill = `Категория продуктов`)) +
+  theme_bw()
+
+
+```
+Данный тип графика отображает абсолютное количество для категориальных переменных. В данном случае можно отобразить, сколько продуктов из категории Rice и сколько продуктов из категории Cookie в абсолютных единицах
+
+```{r}
+
+```
+
+
+# Статистические оценки
+
+## Проверка на нормальность
+
+1) Оцените каждую переменную на соответствие нормальному распределению с помощью теста Шапиро-Уилка. Какие из переменных являются нормальными и как как вы это поняли?
+
+```{r}
+cleaned_data %>%
+  select(where(is.numeric)) %>% 
+  
+  map(function(x) x %>% shapiro.test() %>% .$p.value %>% `<`(0.05)) %>%
+  enframe() %>%
+  mutate(across(value, function(x) ifelse(value == TRUE, "Распределение отлично от нормального", "Распределение нормальное")))
+
+```
+
+В данном случае все перменные распеределены отлично от нормального. 
+
+
+
+2) Постройте для каждой количественной переменной QQ-плот. Отличаются ли выводы от теста Шапиро-Уилка? Какой метод вы бы предпочли и почему?
+
+```{r}
+qqnorm(cleaned_data$`Содержание альфа-каротина,мкг`)
+qqnorm(cleaned_data$`Содержание бетта-каротина,мкг`)
+qqnorm(cleaned_data$`Содержание бетта-криптоксантина,мкг`)
+qqnorm(cleaned_data$`Содержание углеводов, г`)
+qqnorm(cleaned_data$`Уровень холестерина, мг`)
+qqnorm(cleaned_data$`Содержание холина,мг`)
+qqnorm(cleaned_data$`Содержание клетчатки,г`)
+qqnorm(cleaned_data$`Содержание лютеина и зеаксантина,мкг`)
+qqnorm(cleaned_data$`Содержание ликопина,мкг`)
+qqnorm(cleaned_data$`Содержание неацина,мг`)
+qqnorm(cleaned_data$`Содержание белка,г`)
+qqnorm(cleaned_data$`Содержание ретинола,мкг`)
+qqnorm(cleaned_data$`Содержание рибофлавина,мг`)
+qqnorm(cleaned_data$`Содержание селена,мкг`)
+qqnorm(cleaned_data$`Общее количество сахара,Г`)
+qqnorm(cleaned_data$`Содержание тиамина,мг`)
+qqnorm(cleaned_data$`Содержание воды,г`)
+qqnorm(cleaned_data$`Мононасыщенные жиры,г`)
+qqnorm(cleaned_data$`Полинасыщенные жиры,г`)
+qqnorm(cleaned_data$`Насыщенные жиры,г`)
+qqnorm(cleaned_data$`Общее содержание липидов,г`)
+qqnorm(cleaned_data$`Содержание кальция,мг`)
+qqnorm(cleaned_data$`Содержание меди,мг`)
+qqnorm(cleaned_data$`Содержание железа,мг`)
+qqnorm(cleaned_data$`Содержание магния,мг`)
+qqnorm(cleaned_data$`Содержание фосфора,мг`)
+qqnorm(cleaned_data$`Содержания калия,мг`)
+qqnorm(cleaned_data$`Содержание натрия,мг`)
+qqnorm(cleaned_data$`Содержание цинка,мг`)
+qqnorm(cleaned_data$`Содержание витамина А,мкг`)
+qqnorm(cleaned_data$`Содержание витамина В12,мкг`)
+qqnorm(cleaned_data$`Содержание витамина В6,мкг `)
+qqnorm(cleaned_data$`Содержание витамина С,мкг`)
+qqnorm(cleaned_data$`Содержание витамина Е,мкг`)
+qqnorm(cleaned_data$`Содержание витамина К,мкг`)
+
+
+
+```
+
+3) Ниже напишите, какие ещё методы проверки на нормальность вы знаете и какие у них есть ограничения.
+
+**Напишите текст здесь**
+
+
+## Сравнение групп
+
+1) Сравните группы (переменная **Category**) по каждой переменной (как количественной, так и категориальной). Для каждой переменной выберите нужный критерий и кратко обоснуйте его выбор в комментариях.
+
+```{r}
+
+ggplot(cleaned_data, aes(sample = `Содержание альфа-каротина,мкг`)) +
+  stat_qq() +
+  stat_qq_line() +
+  labs(title = 'Содержание альфа-каротина') +
+  theme_bw()
+
+qqnorm(data_food_filtred$`Содержание альфа-каротина,мкг`)
+qqline(data_food_filtred$`Содержание альфа-каротина,мкг`) 
+labs(title = 'Содержание альфа-каротина') 
+```
+
+# Далее идут **необязательные** дополнительные задания, которые могут принести вам дополнительные баллы в том числе в случае ошибок в предыдущих
+
+## Корреляционный анализ
+
+1) Создайте корреляционную матрицу с визуализацией и поправкой на множественные сравнения. Объясните, когда лучше использовать корреляционные матрицы и в чём минусы и плюсы корреляционных исследований.
+
+```{r, fig.height=15, fig.width=17}
+cleaned_data %>%
+  select(where(is.numeric)) %>%
+  corr.test(method = "spearman") -> corr_data
+
+ggcorrplot(corr_data$r, p.mat = corr_data$p, insig = "blank", lab = TRUE)
+
+
+```
+
+## Моделирование
+
+1) Постройте регрессионную модель для переменной **Category**. Опишите процесс построения
+
+```{r}
+cleaned_data %>% 
+  select(!c(Идентификатор, `Описание продукта`)) %>%
+  group_by(`Категория продуктов`) %>%
+  mutate(across(where(is.factor), function(x) x %>% fct_relabel(function(x) x %>% str_c(": ", .)))) -> model_data
+  
+lm(data_food_filtred$`Содержание углеводов, г` ~ ., model_data) %>%
+  
+  
+  tidy(conf.int = TRUE) %>%
+  
+  mutate(across(c(estimate, std.error, statistic, conf.low, conf.high), function(x) x %>% formatC(format = "f", digits = 2, decimal.mark = ".")),
+         `p.value` = ifelse(`p.value` < 0.001, "<0.001", round(`p.value`, 3)),
+         term = term %>% str_remove_all("`") %>% str_replace("\\(Intercept\\)", "Intercept")) %>%
+  
+  unite("95% CI", conf.low, conf.high, sep = ", ") %>%
+  
+  rename(`Переменная` = term, `Коэффициент` = estimate, `Стд.ошибка` = std.error, `Статистика` = statistic) %>%
+  relocate(`95% CI`, .after = `Коэффициент`) %>%
+  
+  flextable() %>%
+  theme_box() %>%
+  align(align = "center", part = "all") %>%
+  bold(i = ~`p.value` %>% str_extract("\\d.\\d{3}") %>% as.numeric() %>% `<`(0.05), j = "p.value")
+```
+
+
+
+
