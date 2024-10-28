@@ -331,7 +331,7 @@ cleaned_data %>%
 table <- cleaned_data %>%
   group_by(`Категория продуктов`) %>%
    summarise(`Absolute frequency` = n(),
-             `Relative frequency, %` = (n() / nrow(test_1))*100) %>%
+             `Relative frequency, %` = (n() / nrow(cleaned_data))*100) %>%
   mutate_if(is.numeric, round, digits = 2) %>%
   flextable() %>%
   theme_box() %>%
@@ -339,7 +339,6 @@ table <- cleaned_data %>%
 
 table
 ```
-
 
 
 # Визуализация
@@ -354,220 +353,319 @@ table
 
 
 ```{r, fig.height=16, fig.width=16}
-g1 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y =`Содержание альфа-каротина,мкг`), outliers = FALSE) +
+
+g1 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y =`Содержание альфа-каротина,мкг`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание альфа-каротина') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание альфа-каротина,мкг`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
-  theme(axis.title.x = element_blank()) +
-   scale_color_brewer(palette = "RdYlGn")
+  theme(legend.position = 'none') +
+  theme(axis.title.x = element_blank()) 
 
-g2 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`,
-                   y =`Содержание бетта-каротина,мкг`), outliers = FALSE) +
+g2 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y =`Содержание бетта-каротина,мкг`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание бетта-каротина') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание бетта-каротина,мкг`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
-  theme(axis.title.x = element_blank())
+  theme(legend.position = 'none') +
+  theme(axis.title.x = element_blank()) 
 
-g3 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y =`Содержание бетта-криптоксантина,мкг`), outliers = FALSE) +
+g3 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y =`Содержание бетта-криптоксантина,мкг`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание бетта-криптоксантина') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание бетта-криптоксантина,мкг`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g4 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y =`Содержание углеводов, г`), outliers = FALSE) +
+g4 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y =`Содержание углеводов, г`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание углеводов') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание углеводов, г`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
-
-g5 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y =`Уровень холестерина, мг`), outliers = FALSE) +
+  
+ 
+g5 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y =`Уровень холестерина, мг`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание холестерина') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Уровень холестерина, мг`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
-  theme(axis.title.x = element_blank())
+  theme(legend.position = 'none') +
+  theme(axis.title.x = element_blank()) 
 
-g6 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание холина,мг`), outliers = FALSE) +
+
+g6 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y =`Содержание холина,мг`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание холина') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание холина,мг`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
-  theme(axis.title.x = element_blank())
+  theme(legend.position = 'none') +
+  theme(axis.title.x = element_blank()) 
+  
 
-g7 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание клетчатки,г`), outliers = FALSE) +
+g7 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y =`Содержание клетчатки,г`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание клетчатки') +
-  theme_bw()+
-  theme(axis.title.x = element_blank())
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание клетчатки,г`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
+  theme_bw() +
+  theme(legend.position = 'none') +
+  theme(axis.title.x = element_blank()) 
 
-g8 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание неацина,мг`), outliers = FALSE) +
+
+g8 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y =`Содержание неацина,мг`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание неацина') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание неацина,мг`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g9 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание белка,г`), outliers = FALSE) +
+g9 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Содержание белка,г`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание белка') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание белка,г`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g10 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание рибофлавина,мг`), outliers = FALSE) +
+g10 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Содержание рибофлавина,мг`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание рибофлавина') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание рибофлавина,мг`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g11 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание селена,мкг`), outliers = FALSE) +
+g11 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Содержание селена,мкг`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание селена') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание селена,мкг`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g12 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Общее количество сахара,Г`), outliers = FALSE) +
+g12 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Общее количество сахара,Г`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание сахара') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Общее количество сахара,Г`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g13 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание тиамина,мг`), outliers = FALSE) +
+g13 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Содержание тиамина,мг`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание тиамина') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание тиамина,мг`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g14 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание воды,г`), outliers = FALSE) +
+g14 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Содержание воды,г`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание воды') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание воды,г`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g15 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Мононасыщенные жиры,г`), outliers = FALSE) +
-  ylab(label = 'Cодержание мононасыщенных жиров') +
+g15 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Мононасыщенные жиры,г`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
+  ylab(label = 'Cодержание мононасыщенных \n жиров') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Мононасыщенные жиры,г`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g16 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Полинасыщенные жиры,г`), outliers = FALSE) +
-  ylab(label = 'Cодержание полинасыщенных жиров') +
+g16 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Полинасыщенные жиры,г`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
+  ylab(label = 'Cодержание полинасыщенных \n жиров') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Полинасыщенные жиры,г`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g17 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Насыщенные жиры,г`), outliers = FALSE) +
+g17 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Насыщенные жиры,г`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание насыщенных жиров') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Насыщенные жиры,г`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g18 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Общее содержание липидов,г`), outliers = FALSE) +
+g18 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Общее содержание липидов,г`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание жиров общее') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Общее содержание липидов,г`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g19 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание кальция,мг`), outliers = FALSE) +
+g19 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Содержание кальция,мг`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание кальция') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание кальция,мг`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g20 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание меди,мг`), outliers = FALSE) +
+g20 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Содержание меди,мг`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание меди') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание меди,мг`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g21 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание железа,мг`), outliers = FALSE) +
+g21 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Содержание железа,мг`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание железа') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание железа,мг`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g22 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание магния,мг`), outliers = FALSE) +
+g22 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Содержание магния,мг`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание магния') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание магния,мг`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g23 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание фосфора,мг`), outliers = FALSE) +
+g23 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Содержание фосфора,мг`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание фосфора') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание фосфора,мг`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g24 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержания калия,мг`), outliers = FALSE) +
+g24 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Содержания калия,мг`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание калия') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержания калия,мг`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g25 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание натрия,мг`), outliers = FALSE) +
+g25 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Содержание натрия,мг`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание натрия') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание натрия,мг`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
 
-g26 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание цинка,мг`), outliers = FALSE) +
+
+g26 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Содержание цинка,мг`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание цинка') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание цинка,мг`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g27 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание витамина А,мкг`), outliers = FALSE) +
+g27 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Содержание витамина А,мкг`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание витамина А') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание витамина А,мкг`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g28 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание витамина В6,мкг `), outliers = FALSE) +
+g28 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Содержание витамина В6,мкг `)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание витамина В6') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание витамина В6,мкг `), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g29 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание витамина Е,мкг`), outliers = FALSE) +
+g29 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Содержание витамина Е,мкг`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание витамина Е') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание витамина Е,мкг`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
-g30 <- ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание витамина К,мкг`), outliers = FALSE) +
+g30 <- ggplot(cleaned_data, aes(x = `Категория продуктов`, y = `Содержание витамина К,мкг`)) +
+  geom_boxplot(aes(fill = `Категория продуктов`), outliers = FALSE) +
   ylab(label = 'Cодержание витамина К') +
+  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание витамина К,мкг`), pch = 1) +
+  scale_fill_brewer(palette = 'Dark2') +
   theme_bw() +
+  theme(legend.position = 'none') +
   theme(axis.title.x = element_blank())
+  
 
 
 ggarrange(g1,g2,g3,g4,g5,g6,g7,g8, g9,g10,g11,g12,g13,g14,g15,g16, g17,g18,g19,g20,g21,g22,g23,g24, g25,g26,g27,g28,g29,g30)
   
 ```
-
 ```{r}
-ggplot(data_food_filtred) +
-  geom_boxplot(aes(x = `Категория продуктов`, y =`Содержание альфа-каротина,мкг`), outliers = FALSE) +
-  ylab(label = 'Cодержание альфа-каротина') +
-  scale_color_brewer(palette = "RdYlGn") +
-  theme_bw() +
-  theme(axis.title.x = element_blank()) 
-```
+ggarrange(g1,g2,g3,g4,g5,g6)
+ggarrange(g7,g8,g9,g10,g11,g12)
+ggarrange(g13,g14,g15,g16, g17,g18)
+ggarrange(g19,g20,g21,g22,g23,g24)
+ggarrange(g25,g26,g27,g28,g29,g30)
 
-```{r}
-par(xpd = FALSE)
-ggplot(data_food_filtred) +
-  geom_boxplot(aes(x = `Категория продуктов`, y = `Содержание витамина В6,мкг `), outliers = FALSE) +
-  ylab(label = 'Cодержание витамина В6') +
-  ggbeeswarm::geom_beeswarm(aes(x = `Категория продуктов`, y = `Содержание витамина В6,мкг `)) +
-  theme_bw() +
-  theme(axis.title.x = element_blank())
-```
 
-```{r}
-ggplot(cleaned_data) +
-  geom_boxplot(aes(x = `Категория продуктов`, y =`Содержание углеводов, г`)) +
-  ylab(label = 'Cодержание углеводов') +
-  theme_bw() +
-  theme(axis.title.x = element_blank())
-```
 
+```
 
 ## Категориальные переменные
 
@@ -582,9 +680,6 @@ ggplot(cleaned_data) +
 ```
 Данный тип графика отображает абсолютное количество для категориальных переменных. В данном случае можно отобразить, сколько продуктов из категории Rice и сколько продуктов из категории Cookie в абсолютных единицах
 
-```{r}
-
-```
 
 
 # Статистические оценки
@@ -650,9 +745,14 @@ qqnorm(cleaned_data$`Содержание витамина К,мкг`)
 
 ```
 
+Я бы предпочла тест Шапиро-Уилка, где можно увидеть конкретные знаяения p-value (< > 0) и сделать вывод о нормальности распределения. По QQ-плоту так же можно определить, но это, скорее, визуальная оценка, точки на графике не всегда могут образовывать прямую линию. Доволно субъективный метод оценки на нормальность. 
+ 
+
 3) Ниже напишите, какие ещё методы проверки на нормальность вы знаете и какие у них есть ограничения.
 
-**Напишите текст здесь**
+* Тест Андерсона-Дарлинга: выборки должны быть случайн и независимы; допускается небольшая асимметрия распределения
+* Тест Колмогорова-Смирнова: выборки должны быть случайн и независимы, применяется только на больших выборках (более 50). Не хватает мощности на малых выборках. Для симметричных распределений
+
 
 
 ## Сравнение групп
@@ -660,17 +760,20 @@ qqnorm(cleaned_data$`Содержание витамина К,мкг`)
 1) Сравните группы (переменная **Category**) по каждой переменной (как количественной, так и категориальной). Для каждой переменной выберите нужный критерий и кратко обоснуйте его выбор в комментариях.
 
 ```{r}
+Rice <- cleaned_data %>%
+  select(c(`Категория продуктов`, `Содержание витамина А,мкг` )) %>%
+  group_by(`Категория продуктов`) %>%
+  filter(`Категория продуктов` == 'Rice')
 
-ggplot(cleaned_data, aes(sample = `Содержание альфа-каротина,мкг`)) +
-  stat_qq() +
-  stat_qq_line() +
-  labs(title = 'Содержание альфа-каротина') +
-  theme_bw()
+Cookie <- cleaned_data %>%
+  select(c(`Категория продуктов`, `Содержание витамина А,мкг` )) %>%
+  group_by(`Категория продуктов`) %>%
+  filter(`Категория продуктов` == 'Cookie')
 
-qqnorm(data_food_filtred$`Содержание альфа-каротина,мкг`)
-qqline(data_food_filtred$`Содержание альфа-каротина,мкг`) 
-labs(title = 'Содержание альфа-каротина') 
+wilcox.test(Rice$`Содержание витамина А,мкг` ~ Cookie$`Содержание витамина А,мкг`, paired = FALSE)
 ```
+Для сравнения двух выборок (Rice и Cookie) по количественным переменным использовала wilcox.test, так ранее мы определили, что распределения количественным переменных отлично от нормального, а t-test используется для признаклв, распределенных нормально. Поэтому для сравнения двух независимых выборок, распределенных ненормально используем wilcox.test
+
 
 # Далее идут **необязательные** дополнительные задания, которые могут принести вам дополнительные баллы в том числе в случае ошибок в предыдущих
 
@@ -687,10 +790,22 @@ ggcorrplot(corr_data$r, p.mat = corr_data$p, insig = "blank", lab = TRUE)
 
 
 ```
+Корреляционные матрицы удобно использовать при большом количестве переменных, кога надо быстро определить, что с чем коррелирует
+
+ Плюсы корреляционных матриц: 
+ *Когда много переменных, то можно фактически одной командой посмотреть, между какими переменными есть корреляция, насколько она сильная. А также в ячейки сразу вписаны значения
+ 
+ Минусы корреляционных матриц: 
+  * Не всегда наглядна, тяжело вопринимать при большом количестве переменных
+  * Очень долго создается при довольно большом количестве переменных 
+ 
 
 ## Моделирование
 
 1) Постройте регрессионную модель для переменной **Category**. Опишите процесс построения
+
+Сначала создаем датасет для анализа. Отфильтровываем не количественные переменные и группируем по категориям. 
+Выбрала перменную - Содержание углеводов
 
 ```{r}
 cleaned_data %>% 
@@ -698,7 +813,7 @@ cleaned_data %>%
   group_by(`Категория продуктов`) %>%
   mutate(across(where(is.factor), function(x) x %>% fct_relabel(function(x) x %>% str_c(": ", .)))) -> model_data
   
-lm(data_food_filtred$`Содержание углеводов, г` ~ ., model_data) %>%
+lm(cleaned_data$`Содержание углеводов, г` ~ ., model_data) %>%
   
   
   tidy(conf.int = TRUE) %>%
