@@ -1,0 +1,150 @@
+---
+title: "Untitled"
+author: "Arina"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(psych)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(flextable)
+library(ggpubr)
+library(rstatix)
+library(pROC)
+library(gtsummary)
+
+```
+
+```{r}
+trauma <- read.csv("C:/Users/Huawei/Desktop/biostat_2024-2025/Специфика мед данных/trauma - Sheet1.csv")
+```
+
+
+#Описательная статистика для переменных
+```{r}
+sum(is.na(trauma))
+
+
+trauma$Height = gsub('"', '', trauma$Height)
+trauma$Weight = gsub(',', '.', trauma$Weight)
+trauma$Hb = gsub(',', '.', trauma$Hb)
+
+trauma
+
+```
+```{r}
+trauma_1 <- trauma %>%
+ mutate(id = as.factor(id),
+        FOUR = as.factor(FOUR),
+        GSC = as.factor(GSC),
+        Death = as.factor(Death),
+        Age = as.numeric(Age),
+        SBP = as.numeric(SBP),
+        DBP = as.numeric(DBP),
+        Height = as.numeric(Height),
+        Hb = as.numeric(Hb),
+        Weight = as.numeric(Weight))
+```
+
+```{r}
+trauma_1 %>%
+  summary()
+```
+
+```{r}
+trauma_2 <- trauma_1 %>%
+  mutate(Hb = na_if(Hb, 0))
+```
+
+#Пациенты с низким геомглобином
+```{r}
+low_Hb_Male <- trauma_2 %>%
+  filter(Hb < 13.5 & Sex == "Male") %>%
+     nrow()
+
+low_Hb_Female <- trauma_2 %>%
+  filter(Hb < 12 & Sex == "Female") %>%
+     nrow()
+
+low_Hb_Female + low_Hb_Male  #количество пациентов с низким гемоглобином
+
+(low_Hb_Female + low_Hb_Male) / nrow(trauma_2) * 100 #процент пациентов с низким гемоглобином
+```
+
+```{r}
+trauma_3 <- trauma_2 %>%
+  mutate(across(Height, function(x) x*2.54),
+         across(Weight, function(x) x/2.2))
+
+trauma_3
+```
+
+```{r}
+trauma_3 %>% 
+    select(Age,
+           Height,
+           Weight,
+           SBP,
+           DBP,
+           Hb) %>% 
+    tbl_summary() 
+```
+
+```{r}
+trauma_IMT <- trauma_3 %>%
+  mutate('ИМТ' = Weight/Height*100 %>% round(1))
+
+mean(trauma_IMT$ИМТ) #средний уровень ИМТ
+
+trauma_high_IMT <- trauma_IMT %>%
+  filter(ИМТ > 30) %>%
+  nrow()
+
+trauma_high_IMT / nrow(trauma_IMT) *100 #доля пациентов с ожирением
+
+
+```
+```{r}
+roc_curve_1 <- roc(Death ~ Hb, 
+                   data = trauma_3,
+                   ci = T)
+
+roc_curve_1
+```
+
+```{r}
+roc_curve_1 %>% 
+    ggroc() + 
+    theme_bw()
+```
+```{r}
+roc_curve_1 %>% coords()
+```
+```{r}
+roc_curve_1 %>% coords(x = "best", best.method = "closest.topleft")
+```
+```{r}
+trauma_3 %>% names()
+
+trauma_3 %>% 
+    
+    select(Age,
+           Height,
+           Weight,
+           SBP,
+           DBP,
+           Hb) %>% 
+    
+    pivot_longer() %>% 
+    
+    group_by(name) %>% 
+    
+    summarise(AUC = roc(Arterial_occlusion, value, ci = T)$ci[2] %>% round(3),
+              AUC_LCL = roc(Arterial_occlusion, value, ci = T)$ci[1] %>% round(3),
+              AUC_UCL = roc(Arterial_occlusion, value, ci = T)$ci[3] %>% round(3))
+```
+
