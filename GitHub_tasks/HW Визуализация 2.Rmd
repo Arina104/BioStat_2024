@@ -334,12 +334,13 @@ plot_new <- hogwarts |>
 
 plot_new_1 <- hogwarts |>
   group_by(house) |>
-  summarise(Ср.знач = mean(result))
+  summarise(Ср.знач = mean(result)) 
 
 gr <- c('Девочки', 'Мальчики')
 names(gr) <- c('Девочки', 'Мальчики')
 
 plot_new |>
+  rename('Девочки' = female, 'Мальчики' = male) |>
   ggplot(aes(x = house, y = result, fill = house)) +
   geom_violin(aes(x = house, y = result, mean = house))+
   geom_boxplot(width = 0.05, fill ='white', outlier.colour = NA) +

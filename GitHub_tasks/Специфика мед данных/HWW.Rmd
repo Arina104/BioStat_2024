@@ -3,8 +3,8 @@ title: "Untitled"
 author: "Arina"
 date: "`r Sys.Date()`"
 output:
-  word_document: default
-  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 
 
@@ -58,7 +58,7 @@ trauma_1 <- trauma %>%
 trauma_1 %>%
   summary()
 ```
-##Все нули заменяем на NA (пропущенные значения)
+##Все нули в Hb заменяем на NA (пропущенные значения)
 ```{r}
 trauma_2 <- trauma_1 %>%
   mutate(Hb = na_if(Hb, 0))
@@ -67,22 +67,26 @@ trauma_2 <- trauma_1 %>%
 ##Пациенты с низким гемоглобином
 ```{r}
 low_Hb_Male <- trauma_2 %>%
-  filter(Hb < 13.5 & Sex == "Male") %>%
+  filter(Hb < 13.5 & Sex == "Male", na.rm = TRUE) %>%
      nrow()
 
 low_Hb_Female <- trauma_2 %>%
-  filter(Hb < 12 & Sex == "Female") %>%
+  filter(Hb < 12 & Sex == "Female", na.rm = TRUE) %>%
      nrow()
+
 
 low_Hb_Female + low_Hb_Male  #количество пациентов с низким гемоглобином
 
-(low_Hb_Female + low_Hb_Male) / nrow(trauma_2) * 100 #процент пациентов с низким гемоглобином
+(low_Hb_Female + low_Hb_Male) / (nrow(trauma_2) - sum(is.na(trauma_2$Hb))) * 100 #процент пациентов с низким гемоглобином без пропущенных значений гемоглобина
+
+(low_Hb_Female + low_Hb_Male) / nrow(trauma_2) * 100 #процент пациентов с низким гемоглобином 
+
 ```
 ##Меняем размерность переменных (для роста и веса) 
 ```{r}
 trauma_3 <- trauma_2 %>%
-  mutate(across(Height, function(x) x*2.54),
-         across(Weight, function(x) x/2.2))
+  mutate(across(Height, function(x) x*2.54) %>% round(1),
+         across(Weight, function(x) x/2.2) %>% round(1))
 
 trauma_3
 ```
@@ -100,6 +104,8 @@ trauma_3 %>%
     tbl_summary(by = Death) %>%
     add_p()
 ```
+Так как p-value меньше 0,05 для SBP, DBP, Hb, то эти параметры влияют на смерность при черепно-мозговой травме.
+
 #Задание 2
 ```{r}
 trauma_IMT <- trauma_3 %>%
@@ -139,6 +145,7 @@ roc_curve_1
 ```
 Площадь под кривой - 0.7078
 В доверительный интервал не входит 0,5, значит площадь под кривой значимо отличается от 0,5 => можем отвергнуть нулевую гипотезу. Признак подходит, чтобы предсказать смертельный исход
+
 
 #Задание 5
 ##Порог
