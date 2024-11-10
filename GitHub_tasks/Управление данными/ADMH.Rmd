@@ -1,0 +1,94 @@
+---
+title: "Untitled"
+author: "Arina"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(readxl)
+library(openxlsx)
+```
+
+```{r}
+mh_med <- read.xlsx("./SDTM/MH_MEDICALHISTORY.xlsx")
+adsl <-  read.xlsx("./SDTM/ADSL.xlsx")
+
+```
+
+```{r}
+mh_med %>%
+  glimpse()
+```
+
+```{r}
+mh_med_1 <- 
+  mh_med %>% 
+  select(MHSEQ,MHCAT,MHTERM, MHDECOD, MHBODSYS, MHSTDTC, MHENDTC, MHENRTPT, STUDYID, SUBJID) %>% 
+  mutate(MHSEQ = as.integer(MHSEQ), 
+         MHENDTC = as.character(MHENDTC)) %>%
+  mutate(MHTERM = ifelse(is.na(MHTERM), "Отсутствует", MHTERM))
+  
+```
+
+
+```{r}
+adsl %>%
+  glimpse()
+```
+
+```{r}
+adsl_1 <- adsl %>%
+  select(STUDYID, USUBJID, TRTP, TRTPN, SUBJID) %>%
+  mutate(TRTPN = as.integer(TRTPN))
+```
+
+
+#Работа с датами
+
+```{r}
+dates_mh_1 <- mh_med_1 %>% 
+  select(MHSEQ, MHSTDTC, MHENDTC, MHENRTPT, STUDYID, SUBJID) %>%
+  mutate(ASTDT = case_when(
+    MHSTDTC == format(as.Date(MHSTDTC, format = "%Y-%m-%d"), "%Y-%m-%d") ~ format(as.Date(MHSTDTC, format = "%Y-%m-%d"), "%d.%m.%Y"),
+    MHSTDTC == format(as.Date(MHSTDTC, format = "%Y-%d"), "%Y-%d") ~ format(as.Date(MHSTDTC, format = "%Y-%d"), "01.%d.%Y"),
+    MHSTDTC == format(as.Date(MHSTDTC, format = "%Y"), "%Y") ~ format(as.Date(MHSTDTC, format = "%Y"), "01.01.%Y"),
+    is.na(MHSTDTC) ~ ''
+  )) %>%
+  mutate(AENDT = ifelse(MHENRTPT == 'ONGOING', '', MHENDTC)) %>%
+  mutate(ASTDTF = case_when(is.na(MHENDTC) ~ 'Y',
+                            MHENDTC == format(as.Date(MHENDTC, format = "%%Y-%d"),"%Y-%d") ~ 'D',
+                            MHENDTC == format(as.Date(MHENDTC, format = "%Y"), "%Y") ~ 'M',
+                            MHENDTC == format(as.Date(MHENDTC, format = "%Y-%m-%d"),"%Y-%m-%d") ~ ' ')) %>%
+  mutate(AENDTF = case_when(is.na(MHSTDTC) ~ 'Y',
+                            MHSTDTC == format(as.Date(MHSTDTC, format = "%Y-%d"),"%Y-%d") ~ 'D',
+                            MHSTDTC == format(as.Date(MHSTDTC, format = "%Y"), "%Y") ~ 'M',
+                            MHSTDTC == format(as.Date(MHSTDTC, format = "%Y-%m-%d"),"%Y-%m-%d") ~ ' ')) %>%
+  mutate(MHENRF =ifelse(MHENRTPT == 'ONGOING', 'ONGOING', ''))
+```
+
+
+```{r}
+date <- left_join(adsl_1, mh_med_1) 
+date_1 <- left_join(date, dates_mh_1)
+ADMH <- date_1 %>%
+  select(!SUBJID) %>%
+  relocate(ASTDT, .after = MHSTDTC) %>%
+  relocate(ASTDTF, .after = ASTDT) %>%
+  relocate(MHENRTPT, .after = AENDTF) %>%
+  mutate(MHSTDTC = as.Date(MHSTDTC)) %>%
+  mutate(MHENDTC = as.Date(MHENDTC))
+
+```
+
+```{r}
+write.xlsx(ADMH, "./ADaM-like/ADMH.xlsx")
+```
+
+```{r}
+ADMH %>%
+  glimpse()
+```
+
