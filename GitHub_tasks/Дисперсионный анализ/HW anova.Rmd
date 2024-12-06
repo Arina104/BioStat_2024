@@ -1,0 +1,94 @@
+---
+title: "Untitled"
+author: "Arina"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+data <- read.csv2("C:/Users/Huawei/Desktop/biostat_2024-2025/Дисперсионный анализ/soccer.csv")
+```
+
+```{r}
+data_1 <- data %>%
+  mutate(Position = as.factor(Position),
+         Nationality = as.factor(Nationality),
+         Age = as.numeric(Age),
+         Height = as.numeric(Height)) %>%
+  filter(Nationality %in% c('Spanish', 'Italian', 'German', 'English', 'Argentinian'))
+```
+
+```{r}
+soccer_wrk <- data_1[sample(1:nrow(data_1), 150), ] %>%
+  mutate(Nationality = factor(Nationality))
+```
+
+```{r}
+ANOVA <- aov(Height~Position, data = soccer_wrk)
+```
+
+
+#Доверительные интервалы 
+```{r}
+tukey <- TukeyHSD(ANOVA) 
+tukey
+
+par(mar = c(5,10,4,2)+0.1)
+par(las = 1)
+
+TukeyHSD(ANOVA) %>%
+  plot()
+```
+
+#ДИ с попрвкой Бонферрони
+```{r}
+tukey_2 <- TukeyHSD(ANOVA) 
+
+adjusted_p_values <- p.adjust(tukey_2$Position[, "p adj"], method = "bonferroni")
+
+tukey_2$Position[, "p adj"] <- adjusted_p_values
+
+
+num <- nrow(tukey_2$Position) #количестов сравнений
+
+tukey_2$Position[, "lwr"] <- tukey_2$Position[, "lwr"] + qtukey(p = 0.05 / num, df = ANOVA$df.residual, nmeans = 4)
+tukey_2$Position[, "upr"] <- tukey_2$Position[, "upr"] - qtukey(p = 0.05 / num, df = ANOVA$df.residual, nmeans = 4)
+
+
+par(mar = c(5,10,4,2)+0.1)
+par(las = 1)
+tukey_2 %>% plot()
+
+tukey_2
+```
+
+#Визуализация 
+```{r}
+ggplot(soccer_wrk) +
+  geom_boxplot(aes(x=Position, y = Height)) +
+  geom_jitter(aes(x=Position, y = Height)) +
+  theme_bw()
+```
+#Доверительный интервал везде покрывает реальную разницу в средних значениях, кроме пары Midfielder-Forward. Рост игроков на этих позициях статистически не отличается. Это так же видно на боксплотах.    
+
+
+#Попарный тест с поправкой Холма
+```{r}
+pairwise.t.test(soccer_wrk$Height, soccer_wrk$Position, pool.sd = FALSE) 
+
+```
+
+# С поправкой Бонферрони
+```{r}
+pairwise.t.test(soccer_wrk$Height, soccer_wrk$Position, p.adjust.method = "bonf", pool.sd = FALSE)
+```
+#С поправкой Бенджамина-Хохберга
+```{r}
+pairwise.t.test(soccer_wrk$Height, soccer_wrk$Position, p.adjust.method = "BH", pool.sd = FALSE)
+```
+
+#Реальных различий между Midfielder и Forward нет. 
