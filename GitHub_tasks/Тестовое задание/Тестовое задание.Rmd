@@ -1,0 +1,457 @@
+---
+title: "Untitled"
+author: "Arina"
+date: "`r Sys.Date()`"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+library(ggpubr)
+library(flextable)
+```
+
+
+```{r}
+conc <- readxl::read_xlsx('C:/Users/Huawei/Desktop/Задание/pk_conc_right.xlsx')
+time <- readxl::read_xlsx('C:/Users/Huawei/Desktop/Задание/time.xlsx')
+
+```
+#Преобразование данных
+##Создадим столбец Concentration для каждого ID
+```{r}
+data <- conc %>%
+  pivot_longer(-ID, values_to = 'Concentration')
+```
+
+```{r}
+data$Concentration <-  as.numeric(data$Concentration)
+```
+##Создадим столбец Time
+```{r}
+time <- time %>%
+  pivot_longer('PK1':'PK23', values_to = 'Time')
+```
+
+##Склеим датасеты по переменной name 
+```{r}
+data_ready <- left_join(data, time)
+
+```
+#Визуализируем кривую для одного из пациентов
+```{r}
+ID_1 <- data_ready %>%
+  group_by(ID) %>%
+  mutate(Concentration = as.numeric(Concentration)) %>%
+  filter(ID == '11-001') 
+
+ID_1_1<- ID_1
+
+ggplot(ID_1, aes(x = Time, y = Concentration)) +
+  geom_line(color = "blue", size = 1, na.rm = TRUE) + 
+  scale_color_manual(values = c("black", "red")) +
+  labs(title = "Зависимость концентрации от времени (с пропущенными \n значениями времени)",
+       x = "Время (ч)", 
+       y = "Концентрация (нг/мл)") +
+  theme_minimal() 
+
+
+```
+#Сплайновая интерполяция для переменной время (восстановление пропущенных значений) 
+```{r}
+library(zoo)
+
+ID_1_1$Time <- na.spline(ID_1_1$Time)
+
+ggplot(ID_1_1, aes(x = Time, y = Concentration)) +
+  geom_line(color = "blue", size = 1, na.rm = TRUE) +  
+  scale_color_manual(values = c("black", "red")) +  
+  labs(title = "Зависимость концентрации от времени (восстановленные значения времени)",
+       x = "Время (ч)", 
+       y = "Концентрация (нг/мл)") +
+  theme_minimal() 
+```
+#Проведем интерполяцию для всего датасета
+```{r}
+library(zoo)
+
+# Сплайновая интерполяция
+data_ready$Time <- na.spline(data_ready$Time)
+```
+
+#Работа с пропущенными значениями в перменной Concentration
+```{r}
+#Для первой точки все концентрации равны 0. Но проверив датасет, был найден пациент с пропущенным значением для первой концентрациеонной точки, это может в дальшнейшем повлиять при импутации. Заменила NA на 0, так как в данной точке препарат не поступил в кровь или только поступил (нулевое значение)
+
+data_ready %>%
+  filter(name == 'PK1')
+  
+data_ready$Concentration[(data_ready$ID == "08-004") & (data_ready$name == 'PK1')] <- 0  
+
+```
+
+```{r}
+data_ready_con <- data_ready %>%
+  select(c(ID, Concentration))
+
+data_ready_con$Concentration <- as.numeric(data_ready_con$Concentration)
+```
+
+#Проводим множественную импутацию для переменной Concentration
+```{r}
+install.packages('mice')
+library(mice)
+```
+
+#Видно, что в данном случае модель нелинейна. Буду использовать множественную импутацию (mice), хотя это так же не совсем корректно. Нужно учесть нелинейность и прописать модель. Возможно, это скажется на точности модели
+#Проводим интерации (5 раз) и далее усредняем значения, чтобы получить более точные результаты
+```{r, echo=FALSE}
+imputed_data <- mice(data_ready_con, m = 5, maxit = 50, seed = 1234)  
+
+completed_data <- complete(imputed_data, action = "long", include = TRUE)
+
+```
+
+```{r}
+# Усреднение значений по каждому наблюдению
+averaged_data <- aggregate(Concentration ~ .id, completed_data, mean)
+```
+
+```{r}
+#Добавила новую колонку концентраций с восстноваленными NA
+data_ready$Conc <- averaged_data$Concentration
+```
+
+#Убираем старые значения концентраций и оставляем новую колонку с восстановленными пропусками
+```{r}
+data_final <- data_ready %>%
+  select(!Concentration)
+```
+
+
+#Рассчитываем средние значения концентраций для каждой временной точки по всем пациентам и создаем новый датасет 
+```{r}
+data_mean <- data_final %>%
+  group_by(name) %>%
+  summarise(Mean_conc = mean(Conc),
+            Time = mean(Time))
+```
+
+```{r}
+#Сортируем по возрастанию по времени
+data_mean <- data_mean %>%
+  arrange(Time, Mean_conc)
+```
+
+#Визуализация для усредненой кривой
+```{r}
+ggplot(data_mean, aes(x = Time, y = Mean_conc)) +
+  geom_line(color = '#ECB939', size = 1) + 
+  labs(title = "Фармакокинетическая кривая для средних значений концентраций",
+       x = "Время (ч)", 
+       y = "Концентрация (нг/мл)") +
+  theme_bw()
+
+```
+#Кривая для одного из пациентов
+```{r}
+ID_1 <- data_final %>%
+  filter(ID == '93-007')
+
+ ggplot(ID_1, aes(x = Time, y = Conc)) +
+  geom_line(color = '#ECB939', size = 1) + 
+  labs(title = "Фармакокинетическая кривая для пациента 93-007",
+       x = "Время (ч)", 
+       y = "Концентрация (нг/мл)") +
+  theme_bw()
+```
+
+#Рассчет ФК параметров для каждого пациента
+```{r}
+#Препарат вводится виде 1-часовой внутривенной инфузии в дозе 2 мг/кг в режиме 1 раз в 3 недели. То есть вводится через каждый 21 день (504 часа). Максимальное время, для которого есть концентрационная точка в датасете – 8064 часа. То есть 8064:504 = 16 раз вводили препарат в дозе 2 мг/кг в течение 336 дней (8064 часов).
+
+#константа ассоциации
+Kon <- 3636000
+#константа диссоциации
+Koff <- 55.44
+
+#константа диссоциации равновесия (говорит о том, насколько эффективно препарат взаимодейтсвет с рецептором)
+KD <- Koff/Kon # в Моль 
+
+
+#Период полувыведения препарата
+Т_полувыведения <- 0.693/Koff
+  
+
+#Вычисляем площадь под кривой AUC (методом трапеций)
+
+patients <- split(data_final, f = data_final$ID) #разделили датасет по пациентам (по уникальным ID) в виде списка
+
+auc_list <- list()
+
+for (i in seq_along(patients)) {    #задаем функцию, которая проходится по каждому пациенту в списке
+  patient_data <- patients[[i]]
+  patient_data <- patient_data[order(patient_data$Time), ]
+  auc <- sum(diff(patient_data$Time) * (head(patient_data$Conc, -1) + tail(patient_data$Conc, -1)) / 2)
+  auc_list[[i]] <- auc
+}
+
+auc_vector <- unlist(auc_list) #Переводим список в вектор
+
+
+#Формируем датасет (сводную таблицу)
+data_total <- data_final %>%
+  group_by(ID) %>%
+  summarise(Cmax = max(Conc, na.rm = TRUE),
+            Tmax = Time[which.max(Conc)])
+
+#добавляем данные о площади под кривой
+data_total$AUC_total <- auc_vector
+
+```
+
+#Определение площади под кривой от 0 до 504 часов (первая фаза)
+```{r}
+limit_time <- 504  #устанавливаем время, до которого надо вычислить площадь под кривой
+
+patients <- split(data_final, f = data_final$ID)
+
+auc_list_1 <- list()
+
+for (i in seq_along(patients)) {
+  patient_data <- patients[[i]]
+  patient_data <- patient_data[order(patient_data$Time), ]
+  
+  # Отфильтровываем данные по установленному времени 504 часа
+  filtered_data <- patient_data[patient_data$Time <= limit_time, ]
+  
+  if (nrow(filtered_data) >= 2) {  
+    auc <- sum(diff(filtered_data$Time) * (head(filtered_data$Conc, -1) + tail(filtered_data$Conc, -1)) / 2)
+    auc_list_1[[i]] <- auc
+  } else {
+    auc_list_1[[i]] <- NA 
+  }
+}
+
+auc_vector_1 <- unlist(auc_list_1)
+
+data_total$AUC_504 <- auc_vector_1
+```
+
+#Определение площади под кривой от 504 до 2520 часов (вторая фаза)
+```{r}
+# Указываем временные границы для расчета AUC
+start_time <- 504
+end_time <- 2520
+
+auc_list_2 <- list()
+
+for (i in seq_along(patients)) {
+  patient_data <- patients[[i]]
+  patient_data <- patient_data[order(patient_data$Time), ]
+  
+  #Отфильтровываем данные по временному интервалу
+  filtered_data <- patient_data[
+    patient_data$Time >= start_time & patient_data$Time <= end_time, 
+    ]
+  
+  if (nrow(filtered_data) >= 2) {
+    auc <- sum(diff(filtered_data$Time) * (head(filtered_data$Conc, -1) + tail(filtered_data$Conc, -1)) / 2)
+    auc_list_2[[i]] <- auc
+  } else {
+    auc_list_2[[i]] <- NA  
+  }
+}
+
+auc_vector_2 <- unlist(auc_list_2)
+
+data_total$AUC_504_2520 <- auc_vector_2
+```
+
+#Определение площади под кривой от 2520 до 8064 часов (на стационарной фазе)
+```{r}
+# Указываем временные границы для расчета AUC
+start_time <- 2520
+end_time <- 8064
+
+auc_list_3 <- list()
+
+for (i in seq_along(patients)) {
+  patient_data <- patients[[i]]
+  patient_data <- patient_data[order(patient_data$Time), ]
+  
+  #Отфильтровываем данные по временному интервалу
+  filtered_data <- patient_data[
+    patient_data$Time >= start_time & patient_data$Time <= end_time, 
+    ]
+  
+  if (nrow(filtered_data) >= 2) {
+    auc <- sum(diff(filtered_data$Time) * (head(filtered_data$Conc, -1) + tail(filtered_data$Conc, -1)) / 2)
+    auc_list_3[[i]] <- auc
+  } else {
+    auc_list_3[[i]] <- NA 
+  }
+}
+
+auc_vector_3 <- unlist(auc_list_3)
+
+data_total$AUC_2520_8064 <- auc_vector_3
+```
+
+#Определение стационарной концентрации
+```{r}
+#По визуализированному распределению видно, что присутствуют два пика и далее концентрация выходит на плато, то есть устанавливается регулярная концентрация Сss, которую мы можем рассчитать по предоставленным данным. Cтационарное состояние начинается примерно после 2500 часов
+
+data_time_stat <- data_final %>% 
+  filter(Time >= 2500)
+
+Css <- data_time_stat %>%
+  group_by(ID) %>%
+  summarise(Css = mean(Conc),
+            Time =  Time[which.min(Conc)] )
+
+data_total$Css <- C(Css$Css)
+
+#Сохраняем полученные параметры в виде таблицы
+data_total %>%
+  flextable::flextable() %>%
+  theme_box() %>%
+  align(align = 'center', part = 'all') 
+```
+
+#Расчет ФК параметров для средних значений
+```{r}
+#Находим максимальную концентрацию и время
+Cmax <- max(data_mean$Mean_conc)
+Tmax <- data_mean$Time[data_mean$Mean_conc == Cmax]
+
+#Формируем новый датасет
+data_ready_param <- data.frame(Cmax = Cmax, Tmax = Tmax, `T1/2` =  Т_полувыведения)
+
+#Рассчитываем плошадь под кривой 
+Time <- c(data_mean$Time)
+Conc <- c(data_mean$Mean_conc)
+
+auc_count <- function(Time, Conc) {
+  n <- length(Time)
+    auc <- 0
+  for (i in 1:(n-1)) {
+    auc <- auc + ((Conc[i+1] + Conc[i]) / 2) * (Time[i+1] - Time[i])
+  }
+    return(auc)
+}
+auc_result <- data.frame(AUC = auc_count(Time, Conc))
+
+#Доза
+#Неизвеста точная доза для пациента, так как доза выражена в мг/кг. Предполагаю, что в реальных ситуациях предоставляются данные о весе пациентов и можно рассчитать средний вес. Пусть средний вес пациентов – 65 кг. Тогда количество препарата, которое попадает в организм человека – 2*65 = 130 мг.
+
+Dose <- 2*65
+data_ready_param$Dose <- Dose
+
+#Находим стационарнцю концентрацию
+
+Css_mean <- data_mean %>%
+  filter(Time >= 2500) %>%
+  summarise(Css = mean(Mean_conc))
+
+data_ready_param$Css_mean <- Css_mean$Css
+
+data_ready_param$AUC <- auc_result$AUC
+
+#Считаем объем распределения 
+# C0 = 37121.31 нг/мл
+data_ready_param$Vd <- Dose/37121.31 * 1000000/1000 %>% round(2)# в литрах
+
+#Общий клиренс
+data_ready_param$Cl <- data_ready_param$Vd*Koff %>% round(2) # в л/часы
+
+data_ready_param %>%
+  flextable() %>%
+  theme_box() %>%
+  align(align = 'center', part = 'all') 
+
+#По параметрам фармакокинетической кривой можно увидеть, что препарат достигает макисмальной концентрации через 2017 часов (84 часа) при мультидозировании (один раз в 21 день). Максимальная концентрация 55584.5 нг/мл. Объем распределения равен 3,5 л (препарат достаточно быстро распрределяется в организме). Общий клиренс - 194 л/час (скорость очищения организма от препарата).
+#При многократном дозировании препарата наблюдается (по визуализации) две фазы распределения препарата, далее концентрация становится постоянной - 19900 нг/мл. Время полувыведения (за которое концентрация в плазме крови снижается в 2 раза) - 0.0125 часа (получилось очень маленькое значение, неправдоподобное, возможно, ошибка в расчетах или же в единицах измерения). Судя по кривым - период полувыведения около 500 часов (20 дней).
+#Площадь под кривой - 161983777 нг/мл/ч = 161 мг/мл/ч
+#Также для фармакокинетических кривых обычно определяется (или изначально даны) коэффициент элиминации и адсорбции. В задании даны константы скоростей связывания и диссоциации с рецептором FcRn. Для расчета времени полувыведения я изпользовала константу скорости диссоциации. Также при использовании другой формулы Cl/Vd = 194/3.5 = 55.4 (то же значение, что и koff).
+```
+
+#Математическая модель
+#Можно использовать модель двухкомпартментную (есть две камеры: центрльная и периферическая). Но в данном случае модель гораздо сложнее и требуются другие способы моделирования
+```{r}
+# Данные о концентрации и времени
+conc <- c(data_mean$Mean_conc)
+time <- c(data_mean$Time)
+
+library(deSolve)
+
+# Подбираем параметры модели
+D <- 130000000 # мг/кг
+V1 <- 100 # л/ч
+k10 <- 0.693 / 55.44 # 1/час (период полувыведения)
+k12 <- 0.05 # 1/час
+k21 <- 0.9 # 1/час
+
+# Начальные условия
+yini <- c(C1 = 0, C2 = 50000)
+
+# Системы дифференциальных уравнений
+model <- function(t, y, parms) {
+  with(as.list(c(y, parms)), {
+    dC1_dt <- -(k10 + k12) * C1 + k21 * C2
+    dC2_dt <- k12 * C1 - k21 * C2
+    list(c(dC1_dt, dC2_dt))
+  })
+}
+
+# Время интегрирования
+times <- seq(from = min(time), to = max(time), by = 1)
+
+# Решение системы дифференциальных уравнений
+out <- ode(y = yini, times = times, func = model, parms = NULL)
+
+# Извлечение концентрации в центральном компартменте
+predicted_conc <- out[, "C1"]
+
+plot(time, conc, pch = 19, xlab = "Время (ч)", ylab = "Концентрация (мг/л)")
+lines(times, predicted_conc, col = "red")
+legend("topright", legend = c("Наблюдаемые значения", "Предсказанные значения"), pch = c(19, NA), lty = c(NA, 1), col = c("black", "red"))
+
+predicted_conc
+```
+#Для создания предиктивной модели необходимо точно математически описать модель кривой
+
+
+#Для моделирования фармакокинетической кривой и расчета параметров так же можно использовать пакеты в R (например, linpk)
+```{r}
+install.packages('linpk')
+library(linpk)
+
+t.obs_1 <- data_mean$Time
+
+pk_profile <- pkprofile(t.obs_1, cl = 3, vc = 197, ka = 65, dose = list(t.dose = 0, amt = 13000000, dur = 1, ii = 504, addl = 16, ss = T))
+
+plot(pk_profile)
+
+secondary(pk_profile)
+```
+##Кроме того, есть другие пакеты в R для моделирования кривых и расчета параметов: PK, PKNCA, nls, nlme
+#Для улучшения точности модели нужно:
+- Использовать более сложную математическую модель (возможно, трехкомпартментную), нелинейные модели.
+- Включить в модель дополнительные факторы, например, возраст пациентов, вес или состояние здоровья пациента. Или какие-либо параметры для препарата
+
+
+```{r}
+options(repos = c(CRAN="https://cloud.r-project.org"))
+```
+
+
+
+
+
