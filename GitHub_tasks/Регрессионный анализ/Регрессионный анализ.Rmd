@@ -1,0 +1,270 @@
+---
+title: "Untitled"
+author: "Arina"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(readxl)
+library(broom)
+library(lmtest)
+library(sandwich)
+library(flextable)
+library(gtsummary)
+library(car)
+```
+
+```{r}
+data <- read.csv('C:/Users/Huawei/Desktop/biostat_2024-2025/Регрессионный анализ/HW_data - Sheet1.csv')
+```
+
+#Задание 1. Оценка физической активности пациентов
+Vigorous work activity (PAQ605)- активная трудовая деятельность
+PAQ610 - Number of days vigorous work
+PAD615 - Minutes vigorous-intensity work
+PAQ620 - Moderate work activity
+PAQ625 - Number of days moderate work
+PAD630 - Minutes moderate-intensity work
+PAQ635 - Walk or bicycle
+PAQ640 - Number of days walk or bicycle
+PAD645 - Minutes walk/bicycle for transportation
+PAQ650 - Vigorous recreational activities
+PAQ655 - Days vigorous recreational activities
+PAD660 - Minutes vigorous recreational activities
+PAQ665 - Moderate recreational activities
+PAQ670 - Days moderate recreational activities
+PAD675 - Minutes moderate recreational activities
+PAD680 - Minutes sedentary activity
+```{r}
+activity <- data.frame(SEQN = data$SEQN,
+                       Vigorous_work = data$PAQ610*data$PAD615,
+                       Moderate_work = data$PAQ625*data$PAD630,
+                       Walk_bicycle = data$PAQ640*data$PAD645,
+                       Vigorous_recreation = data$PAQ655*data$PAD660,
+                       Moderate_recreation = data$PAQ670*data$PAD675)
+```
+
+Физическую активность буду измерять на основе имеющихся переменных по какой-либо нагрузке (физ. активности) пациентов. Количество дней физической активности умножила на количество минут физической активности в день. Таким образом получила датасет с переменными в минутах. Для удобства лучше перевести в часы.
+
+```{r}
+activity <- activity %>%
+  mutate(Vigorous_work = Vigorous_work/60,
+         Moderate_work = Moderate_work/60,
+         Walk_bicycle = Walk_bicycle/60,
+         Vigorous_recreation = Vigorous_recreation/60,
+         Moderate_recreation = Moderate_recreation/60)
+
+activity <- activity %>% round(1)
+```
+
+Гипотеза: при увеличении физической нагрузки уменьшается показатель гликированного гемоглобина
+
+Чтобы оценивать влияние физической активности на гликированный геомглобин, нужна общая переменная по физической нагрузке: низкая активность, умеренная и высокая. Таким образом, мы должны будем увидеть некую зависимость между уровнем гликированного геомглобина и увеличением нагрузки. Так как категоризировать гликированный геоглобин нельзя, то категоризируем физ. нагрузку. Сложим для каждого пациента все часы физ нагрузки и разобъем по категориям.
+```{r}
+Total_activity <- activity %>%
+  group_by(SEQN) %>%
+  summarise(Activity = sum(Vigorous_work,Moderate_work,Walk_bicycle,Vigorous_recreation,Moderate_recreation))
+
+max(Total_activity$Activity)
+
+#Максимальное значение - 90 часов в неделю. Мимнимальное - 0 часов
+#Пусть 0-20 часов - Низкая активность
+ #     20-60 часов - Средняя активность
+ #     60-90 часов - Высокая активность
+      
+Total_activity <- Total_activity %>%
+  mutate(Categories = case_when(Activity == 0 ~ 'Without_activity',
+                                between(Activity, 0.1, 15) ~ 'Low_activity',
+                                between(Activity, 15, 30) ~ 'Middle_activity',
+                                between(Activity, 30, 90) ~ 'Hight_activity'))
+
+```
+#Задание 2. Ковариаты
+Согласно представленному DAG есть следующие показатели:
+-раса (конфаундер, так как влияет и зависимую переменную - гликированный гемоглобин,так и на независимые переменные)
+-пол (конфаундер)
+-Образование (влияет только на независимую переменную)
+-Возраст (влияет только на независимую переменную)
+-Курение (влияет только на зависимую переменную, )
+-Семейный доход (влияет только на независимую переменную, конфаундер)
+-Сопутствующие заболевания (конфаундер)
+-Индекс массы тела (медиатор - физическая активность влияет на гликированный геоглобин посредством индекса массы тела)
+-Кровяное давление (коллайдер - на давление оказывает влияние как гликированный геомглобин, так и наличие физической нагрзки)
+-Лечение диабета (влияет только на независимую переменную)
+-Семейное положение (нейтральная переменная)
+
+В качестве ковариат для использования в модели были выбраны перменные, которые могут оказывать влияние на гликированный геомглобин:
+-Раса
+-Пол
+-Сопутствующие заболевания
+-Курение
+-Индекс массы тела
+-Кровяное давление
+
+Согласно спецификации:
+```{r}
+covariates <- data %>%
+  mutate(Race = case_when(RIDRETH3 == 1 ~ "MexicanAmerican",
+                          RIDRETH3 == 2 ~ "OtherHispanic",
+                          RIDRETH3 == 3 ~ "Non-HispanicWhite",
+                          RIDRETH3 == 4 ~ "Non-HispanicBlack",
+                          RIDRETH3 == 6 ~ "Non-HispanicAsian",
+                          RIDRETH3 == 7 ~ "OtherRace",),
+         Sex = case_when(RIAGENDR == 1 ~  "Male",
+                         RIAGENDR == 2 ~ "Female"), 
+         SmokingStatus = case_when(SMQ040 == 1 ~ "Every day",
+                                   SMQ040 == 2 ~ "Some days",
+                                   SMQ040 == 3 ~ "Not at all"),
+         Asthma = factor(ifelse(MCQ010 == 1 | MCQ035 == 1, 1, 2), levels = c(1,2), labels = c("Yes", "No")),
+         Heart_disease = factor(ifelse(MCQ160C == 1 | MCQ160B == 1 | MCQ160E == 1, 1, 2), levels = c(1,2), labels = c("Yes", "No")), 
+         Stroke = case_when(MCQ160F == 1 ~ "Yes",
+                            MCQ160F == 2 ~ "No"),
+         ThyroidDisease = factor(ifelse(MCQ160M == 1 | MCQ170M == 1, 1, 2), levels = c(1,2), labels = c("Yes", "No")),
+         COPD = case_when(MCQ160O == 1 ~ "Yes",
+                          MCQ160O == 2 ~ "No"),
+         Cancer = case_when(MCQ220 == 1 ~ "Yes",
+                            MCQ220 == 2 ~ "No")) %>%
+  select(c(SEQN, Race, Sex, SmokingStatus, Asthma, Heart_disease, Stroke, ThyroidDisease, COPD, Cancer, LBXGH))
+```
+
+
+Объединим два датасета с ковариатами, физической нагрузки и добваим зависимую переменнную - гликированный геомглобин (для дальнейшей работы)
+```{r}
+ready_data <- left_join(Total_activity, covariates, by = 'SEQN')
+
+ready_data$LBXGH <- gsub(",", "\\.", ready_data$LBXGH)
+
+ready_data <- ready_data %>%
+  mutate(Hb = as.numeric(LBXGH))
+```
+
+
+#Задание 3. Эксплораторный анализ
+Для того, чтобы лучше понимать перемннные по физ нагрузкеи и полученную общую переменную, которая была фактически произвольно разделена на подгруппы, нужно посмотреть распределение
+```{r}
+ready_data|>
+  ggplot() +
+  geom_histogram(aes(x=Activity)) +
+  theme_bw()
+
+
+ready_data|>
+  ggplot() +
+  geom_boxplot(aes( y =Activity, x = Categories)) +
+  theme_bw()
+  
+
+plot_1 <- ready_data|>
+  group_by(Categories) |>
+  summarise(count = n())
+
+plot_1 |>
+  ggplot() +
+  geom_col(aes( y = count, x = Categories)) +
+  geom_text(aes( y = count, x = Categories, label = count, vjust = -0.2)) +
+  theme_bw()
+
+```
+```{r}
+tbl_summary(
+  ready_data, include = -c(SEQN), 
+  type = list(all_continuous() ~ "continuous2"),
+  statistic = list(
+    all_continuous() ~ c("{N_nonmiss}", "{mean} ({sd})", "{median} ({p25}-{p75})", "{min}-{max}")
+  )) %>%
+  modify_footnote(everything() ~ NA) %>%
+  bold_labels()
+```
+
+
+Распределение не является нормалльным, смещено влево. Значений с низким гликированным гемоглобином намного больше, чем с высоким. 
+
+#Задание 4. Регрессионный анализ
+##Без ковариат
+```{r}
+
+model_1 <- lm(Hb ~ Categories, ready_data)
+
+par(mfrow = c(2, 2))
+
+plot(model_1)
+
+model_1
+
+coef(model_1)
+coefci(model_1)
+summary(model_1)
+
+#Точечные и интервальные оценки
+broom::tidy(model_1, conf.int = TRUE)
+
+```
+
+Видно, что для низкой и средней физической активности результаты статистически незначимы. Есть стат значимость для пациентов без какой-либо активности. То есть при остутствии физической активности, увеличивается уровень гликированного геомглобина. R2 = 0.02 - модель очень плохо объясняет данные. Есть некоторое влияние физ нагрузки на уровень гликированного гемоглобина, но он не описывается линейной моделью, то есть, возможно, от количество часов физической активности не влияет на уровень гликированного гемоглобина
+
+Также для Intercept t-критерий отличен от 0 и ДИ интервал не включет 0, следовательно, переменная (физ нагрузка) оказывает статистически значимое влияние на зависимую переменную.
+Также для переменной с отстутвие физ нагрузки ДИ не включает 0 и t-критерий отличен от 0, но тут видно, что стат значимость не является сильной.
+
+По полученным графикам можно сказать, что распределение отлично от нормального по QQ-plot. Остальное оценить не можем, так как категориальная переменная.
+
+##С ковариатами
+```{r}
+model_2 <- lm(Hb ~ Categories + 
+               Sex + Race + SmokingStatus + Asthma + Heart_disease + Stroke + ThyroidDisease + COPD + Cancer, 
+             ready_data)
+
+par(mfrow = c(2, 2))
+
+plot(model_2)
+
+model_2
+
+coef(model_2)
+summary(model_2)
+
+#Точечные и интервальные оценки
+broom::tidy(model_1, conf.int = TRUE)
+```
+При добавлении в модель ковариат R2 немного увеличился, стал 0.11. При этом значимо влияет на гликированный геомоглобин только расса (а именно Non-HispanicWhite), сердечные заболевания, опухолевые заболевания и инсульт(ДИ не включает 0).
+
+t-критерий для Intercept уменьшился, что говорит о снижении влияния на зависимую переменную в связи с включением в модель ковариат, также влияющих на гликированный гемоглобин.
+
+По полученным графикам можно также сказать, что распределение отлично от нормального по QQ-plot. Также присутствует некая гетероскедастичность (нелинейная зависимость). Есть выбросы. Разброс остатков вокруг оценки условного мат ожидания зависимой перменной говорит о нелинейности можели или наличие выбросов.
+
+
+#Задание 5. Точеченая и интервальная оценка
+В задании 4
+
+#Задание 6
+
+```{r}
+cor.test(ready_data$Hb, ready_data$Activity)
+```
+Между гликированием гемоглобина и физической активностью практически нет корреляции, P-value > 0.05. Но она не равна 0, есть небольшая отрицательная корреляция. Эта небольшая корреляция отражается в регрессионном анализе 
+
+
+```{r}
+cor.test(ready_data$Hb[ready_data$Hb > 9], ready_data$Activity[ready_data$Hb > 9])
+```
+При том, если убрать низкие значения гликированного гемоглобина (отфильтовать значения выше среднего уровня гликированного геомглобина),то будет более выраженная отрицательная корреляция
+
+Статистически значимой корреляции нет. При фильтрации значений корреляция так же может меняться (может быть отрицательной или положительной). То есть длительность физической активности не оказывает какой-то однозначный эффект на уровень гликированного гемоглобина. 
+
+
+#Задание 7
+```{r}
+model_sex <- lm(Hb ~ Categories*Sex, ready_data)
+
+summary(model_sex)
+
+broom::tidy(model_sex, conf.int = TRUE)
+```
+Пол не является модификатором эффекта, p-value > 0.05.
+
+
+#Задание 8
+Полученные результаты не соответствуют первоначальной гипотезе. Так как не получилось доказать, что при увеличении физической активности снижается уровень гликированного гемоглобина. Можно сказать, что наличие в принципе физической активности статистичеси значимо влияет на уровень гликированного геомоглобина (это видно по Intercept.), но нет линейной зависимости между физической нагрузкой (категориями) и уровнем гликированного гемоглобина.Также не было обнаружено корреляции между этими параметрами. 
+При использовании модели с ковариатами увеличилось значение Intercept, R2 и отсутствие физ нагрузки стало так же статистически незначимым, то есть какая-то из ковариат вносит вклад. Также увеличилось занчение F-статистики. То есть модель стала немного лучше описывать даннные.
