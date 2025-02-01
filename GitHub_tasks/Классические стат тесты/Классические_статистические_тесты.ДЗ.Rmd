@@ -76,6 +76,7 @@ chisq.test(table(Activity = activity, Cardio = cardio))
 
 fisher.test(table(Activity = activity, Cardio = cardio))
 ```
+
 ```{r}
 # Воспроизводимость результатов
 set.seed(42)
